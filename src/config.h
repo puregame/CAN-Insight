@@ -12,5 +12,13 @@
 #define LOG_FILE_NUM_POS 4 // position of start of 3-set sequential numer of log
 #define LOG_FILE_DOT_POS 7
 
+/// ******  config file parameters *****
+#define CONFIG_FILE_NAME "config.txt"
 
 #define HEADER_CSV "datetime, CAN_ID, Data0, Data1, Data2, Data3, Data4, Data5, Data6, Data7"
+
+
+
+/// ******  can parameters *****
+
+#define DEFAULT_BAUD_RATE_CAN3 250000
