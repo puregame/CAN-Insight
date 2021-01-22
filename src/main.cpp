@@ -1,6 +1,8 @@
 #include "config.h"
+#include "datatypes.cpp"
 #include "Arduino.h"
 #include <FlexCAN_T4.h>
+#include <ArduinoJson.h>
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 
 
@@ -11,18 +13,10 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 
 // look into: https://github.com/greiman/SdFat-beta/blob/master/examples/ExFatLogger/ExFatLogger.ino
 
-// *****   Setup buffer/temp values
-//                                    1         2         3         4            5
-//                          012345678901234567890123456789012345678901234567 8 9 0
-const char CAN_String_Init[64] = "      0.000 1 000 Rx d 8 00 00 00 00 00 00 00 00\r\n\0";
-char CAN_String_Temp[64] = "      0.000 1 000 Rx d 8 00 00 00 00 00 00 00 00\r\n\0";
-char CAN_String_Len = 50;
-
-int baud = DEFAULT_BAUD_RATE_CAN3;
-byte log_std = true;
-byte log_ext = true;
-int filter_mask = 0;
-int filter_value = 0;
+uint32_t baud = DEFAULT_BAUD_RATE_CAN3;
+CANBus_Config can_config_1; // initilize three canbus configurations for teensy 4.1
+CANBus_Config can_config_2;
+CANBus_Config can_config_3;
 
 // ******* Setup timers
 #include "TeensyTimerTool.h"
@@ -104,9 +98,6 @@ int start_log(){
   // if the file is available, write to it:
   if (dataFile) {
   // digital clock display of the time
-    char time_buf[21];
-    set_current_time_in_buffer(time_buf);
-
     dataFile.println(HEADER_CSV);
   }
   else{
@@ -133,6 +124,9 @@ int read_config_file() {
 void can_frame_to_str(const CAN_message_t &msg, char* sTmp){
   set_current_time_in_buffer(sTmp);
   sprintf(sTmp+strlen(sTmp), ",%X", (unsigned int)msg.id);
+  sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.flags.extended);
+  sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.bus);
+  sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.len);
   for (int i=0; i<msg.len; i++){
     sprintf(sTmp+strlen(sTmp), ",%0.2X", msg.buf[i]);
   }
@@ -167,8 +161,6 @@ void can_callback(const CAN_message_t &msg) {
   Serial.print(temp_str);
   write_sd_line(temp_str);
 }
-
-
 
 
 void set_next_log_filename(char* in_file){
@@ -206,7 +198,7 @@ void setup() {
 
   // setup CANBus
   Can3.begin();
-  Can3.setBaudRate(baud);
+  Can3.setBaudRate(can_config_1.baudrate);
   Can3.enableFIFO();
   Can3.enableFIFOInterrupt();
   Can3.onReceive(can_callback);
