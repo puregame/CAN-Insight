@@ -12,8 +12,6 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 // use https://github.com/tonton81/FlexCAN_T4 library for receiving CAN data
 
 // look into: https://github.com/greiman/SdFat-beta/blob/master/examples/ExFatLogger/ExFatLogger.ino
-
-uint32_t baud = DEFAULT_BAUD_RATE_CAN3;
 CANBus_Config can_config_1; // initilize three canbus configurations for teensy 4.1
 CANBus_Config can_config_2;
 CANBus_Config can_config_3;
@@ -66,6 +64,11 @@ void serial_print_current_time(){
   Serial.println(time_buf);
 }
 
+// void fatDateTime(uint16_t *date, uint16_t *time) {
+//   *date = FAT_DATE(localTime.year, localTime.month,  localTime.date);
+//   *time = FAT_TIME(localTime.hours,localTime.minutes,localTime.seconds);
+// }
+
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
 
 unsigned long processSyncMessage() {
@@ -108,16 +111,84 @@ int start_log(){
   return 1;
 }
 
+void set_default_config(CANBus_Config* config, uint8_t port){
+  Serial.print("Setting default config for bus: ");
+  Serial.println(port);
+  config->port=port;
+  sprintf(config->bus_name, "CAN%d", port);
+  config->baudrate=DEFAULT_BAUD_RATE;
+  config->id_filter_mask=0;
+  config->id_filter_value=0;
+  config->log_ext=true;
+  config->log_std=true;
+}
+
+void print_bus_config(CANBus_Config* config){
+  Serial.print("Bus config <bus number: ");
+  Serial.print(config->port, DEC);
+  Serial.print(", bus name: ");
+  Serial.print(config->bus_name);
+  Serial.print(", baudrate: ");
+  Serial.print(config->baudrate);
+  Serial.print(", log_std: ");
+  Serial.print(config->log_std);
+  Serial.print(", log_ext: ");
+  Serial.print(config->log_ext);
+  Serial.print(", id_filter_mask");
+  Serial.print(config->id_filter_mask);
+  Serial.print(", id_filter_value");
+  Serial.print(config->id_filter_value);
+  Serial.println(">");
+}
+
+void set_config_from_jsonobject(JsonObject json_obj, CANBus_Config* config){
+  config->baudrate = json_obj["baudrate"] | DEFAULT_BAUD_RATE;
+  strlcpy(config->bus_name, json_obj["bus_name"] | "BUS1", sizeof(config->bus_name));
+  config->port = 1;
+  config->log_ext = json_obj["log_extended_frames"] | true;
+  config->log_std = json_obj["log_standard_frames"] | true;
+  config->id_filter_mask = json_obj["id_filter_mask"] | 0;
+  config->id_filter_value = json_obj["id_filter_value"] | 0;
+  ;
+
+}
+
 int read_config_file() {
   // to do: implement reading config file
   // baud, ack, log_std, log_ext,
+  Serial.println("reading Config file");
   File config_file = SD.open(CONFIG_FILE_NAME, FILE_READ);
-  // sd_file.open(CONFIG_FILE_NAME);
-  baud = DEFAULT_BAUD_RATE_CAN3;
-  log_std = true;
-  log_ext = true;
-  filter_mask = 0;
-  filter_value = 0;
+  StaticJsonDocument<512> config_doc;
+  DeserializationError error = deserializeJson(config_doc, config_file);
+  config_file.close();
+  JsonObject config_root = config_doc.as<JsonObject>();
+  if (error){
+    Serial.println(F("Failed to read file, using default configuration"));
+    set_default_config(&can_config_1, 1);
+    set_default_config(&can_config_2, 2);
+    set_default_config(&can_config_3, 3);
+    return 1;
+  }
+  JsonObject temp_object;
+
+  if (config_root.containsKey("can1")){ // check if it is not zero or none, if so then process
+    temp_object = config_root["can1"];
+    set_config_from_jsonobject(temp_object, &can_config_1);
+  }
+  else 
+    set_default_config(&can_config_1, 1);
+  if (config_root.containsKey("can2")){
+    temp_object = config_root["can2"];
+    set_config_from_jsonobject(temp_object, &can_config_2);
+  }
+  else
+    set_default_config(&can_config_2, 2);
+  if (config_root.containsKey("can3")){
+    temp_object = config_root["can3"];
+    set_config_from_jsonobject(temp_object, &can_config_3);
+  }
+  else
+    set_default_config(&can_config_3, 3);
   return 1;
 }
 
@@ -195,6 +266,9 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
   if (!read_config_file()) Serial.println("Config File read error!");
+  print_bus_config(&can_config_1);
+  print_bus_config(&can_config_2);
+  print_bus_config(&can_config_3);
 
   // setup CANBus
   Can3.begin();
@@ -230,14 +304,14 @@ void setup() {
 
 unsigned long target_time = 0L ;
 #define ONE_SECOND_PERIOD 1*1000
+#define TEN_SECOND_PERIOD 10*1000
 
 void loop ()
 {
   Can3.events();
-  if (millis () - target_time >= ONE_SECOND_PERIOD)
+  if (millis () - target_time >= TEN_SECOND_PERIOD)
   {
-    target_time += ONE_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen
-    Serial.println("code running");
+    target_time += TEN_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen
   //    write_sd_data();
   //    Serial.print("Current Time: ");
   //    print_current_time();

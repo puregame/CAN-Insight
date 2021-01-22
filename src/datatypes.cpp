@@ -1,8 +1,9 @@
 // datatypes
+#include <stdint.h>
 
 struct CANBus_Config {
-  uint32_t baudrate;
-  char port;
+  unsigned int baudrate;
+  uint8_t port;
   bool log_std;
   bool log_ext;
   int id_filter_mask;
