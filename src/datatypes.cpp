@@ -9,4 +9,5 @@ struct CANBus_Config {
   int id_filter_mask;
   int id_filter_value;
   char bus_name[20];
+  bool log_enabled = true;
 };

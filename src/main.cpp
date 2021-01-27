@@ -3,9 +3,10 @@
 #include "Arduino.h"
 #include <FlexCAN_T4.h>
 #include <ArduinoJson.h>
+
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; //orig RX_SIZE_256 TX_SIZE_64
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2; //orig RX_SIZE_256 TX_SIZE_64
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
-
-
 
 // see TimeTeensy3 example for how to use time library
 
@@ -15,6 +16,7 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 CANBus_Config can_config_1; // initilize three canbus configurations for teensy 4.1
 CANBus_Config can_config_2;
 CANBus_Config can_config_3;
+char single_can_log_config_str[160];
 
 // ******* Setup timers
 #include "TeensyTimerTool.h"
@@ -30,7 +32,6 @@ Timer t2; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
 // #include "SdFat.h"
 #include <SPI.h>
 // SdFat sd_fat;
-
 
 SdFile sd_file;
 char log_file_name[LOG_FILE_NAME_LENGTH] = DEFAULT_LOG_FILE_NAME;
@@ -55,11 +56,12 @@ void blink_builtin_led()
 void set_current_time_in_buffer(char* str_addr){
   // format as ISO datetime like 2021-01-10T20:14:09Z
   time_t seconds = getTeensy3Time();
-  strftime(str_addr, 21, "%Y-%m-%dT%H:%M:%SZ", gmtime(&seconds));
+  strftime(str_addr, 21, "%Y-%m-%dT%H:%M:%S.", gmtime(&seconds));
+  sprintf(str_addr+strlen(str_addr), "%03dZ", millis()%1000);
 }
 
 void serial_print_current_time(){
-  char time_buf[21];
+  char time_buf[40];
   set_current_time_in_buffer(time_buf);
   Serial.println(time_buf);
 }
@@ -96,11 +98,41 @@ void check_serial_time(){
   }
 }
 
+void bus_config_to_str(CANBus_Config* config, char*sTmp){
+  strcat(sTmp, "Bus config <bus number: ");
+  sprintf(sTmp+strlen(sTmp), "%d", (unsigned int)config->port);
+  strcat(sTmp, "; bus name: ");
+  strcat(sTmp, config->bus_name);
+  strcat(sTmp, "; baudrate: ");
+  sprintf(sTmp+strlen(sTmp), "%d", config->baudrate);
+  strcat(sTmp, "; log_std: ");
+  sprintf(sTmp+strlen(sTmp), "%d", config->log_std);
+  strcat(sTmp, "; log_ext: ");
+  sprintf(sTmp+strlen(sTmp), "%d", config->log_ext);
+  strcat(sTmp, "; id_filter_mask");
+  sprintf(sTmp+strlen(sTmp), "%d", config->id_filter_mask);
+  strcat(sTmp, "; id_filter_value");
+  sprintf(sTmp+strlen(sTmp), "%d", config->id_filter_value);
+  strcat(sTmp, "; log_enabled: ");
+  sprintf(sTmp+strlen(sTmp), "%d", config->log_enabled);
+  strcat(sTmp, ">");
+}
+
 int start_log(){
   File dataFile = SD.open(log_file_name, FILE_WRITE);
   // if the file is available, write to it:
   if (dataFile) {
-  // digital clock display of the time
+    // print header file in the log
+    
+    bus_config_to_str(&can_config_1, single_can_log_config_str);
+    dataFile.println(single_can_log_config_str);
+    single_can_log_config_str[0] = '\0';
+    bus_config_to_str(&can_config_2, single_can_log_config_str);
+    dataFile.println(single_can_log_config_str);
+    single_can_log_config_str[0] = '\0';
+    bus_config_to_str(&can_config_3, single_can_log_config_str);
+    dataFile.println(single_can_log_config_str);
+    single_can_log_config_str[0] = '\0';
     dataFile.println(HEADER_CSV);
   }
   else{
@@ -111,11 +143,10 @@ int start_log(){
   return 1;
 }
 
-void set_default_config(CANBus_Config* config, uint8_t port){
+void set_default_config(CANBus_Config* config){
   Serial.print("Setting default config for bus: ");
-  Serial.println(port);
-  config->port=port;
-  sprintf(config->bus_name, "CAN%d", port);
+  Serial.println(config->port);
+  sprintf(config->bus_name, "CAN%d", config->port);
   config->baudrate=DEFAULT_BAUD_RATE;
   config->id_filter_mask=0;
   config->id_filter_value=0;
@@ -123,28 +154,11 @@ void set_default_config(CANBus_Config* config, uint8_t port){
   config->log_std=true;
 }
 
-void print_bus_config(CANBus_Config* config){
-  Serial.print("Bus config <bus number: ");
-  Serial.print(config->port, DEC);
-  Serial.print(", bus name: ");
-  Serial.print(config->bus_name);
-  Serial.print(", baudrate: ");
-  Serial.print(config->baudrate);
-  Serial.print(", log_std: ");
-  Serial.print(config->log_std);
-  Serial.print(", log_ext: ");
-  Serial.print(config->log_ext);
-  Serial.print(", id_filter_mask");
-  Serial.print(config->id_filter_mask);
-  Serial.print(", id_filter_value");
-  Serial.print(config->id_filter_value);
-  Serial.println(">");
-}
-
 void set_config_from_jsonobject(JsonObject json_obj, CANBus_Config* config){
   config->baudrate = json_obj["baudrate"] | DEFAULT_BAUD_RATE;
-  strlcpy(config->bus_name, json_obj["bus_name"] | "BUS1", sizeof(config->bus_name));
-  config->port = 1;
+  char bus_str[5];
+  sprintf(bus_str, "CAN%d", config->port);
+  strlcpy(config->bus_name, json_obj["bus_name"] | bus_str, sizeof(config->bus_name));
   config->log_ext = json_obj["log_extended_frames"] | true;
   config->log_std = json_obj["log_standard_frames"] | true;
   config->id_filter_mask = json_obj["id_filter_mask"] | 0;
@@ -164,9 +178,9 @@ int read_config_file() {
   JsonObject config_root = config_doc.as<JsonObject>();
   if (error){
     Serial.println(F("Failed to read file, using default configuration"));
-    set_default_config(&can_config_1, 1);
-    set_default_config(&can_config_2, 2);
-    set_default_config(&can_config_3, 3);
+    set_default_config(&can_config_1);
+    set_default_config(&can_config_2);
+    set_default_config(&can_config_3);
     return 1;
   }
   JsonObject temp_object;
@@ -176,27 +190,27 @@ int read_config_file() {
     set_config_from_jsonobject(temp_object, &can_config_1);
   }
   else 
-    set_default_config(&can_config_1, 1);
+    set_default_config(&can_config_1);
   if (config_root.containsKey("can2")){
     temp_object = config_root["can2"];
     set_config_from_jsonobject(temp_object, &can_config_2);
   }
   else
-    set_default_config(&can_config_2, 2);
+    set_default_config(&can_config_2);
   if (config_root.containsKey("can3")){
     temp_object = config_root["can3"];
     set_config_from_jsonobject(temp_object, &can_config_3);
   }
   else
-    set_default_config(&can_config_3, 3);
+    set_default_config(&can_config_3);
   return 1;
 }
 
 void can_frame_to_str(const CAN_message_t &msg, char* sTmp){
   set_current_time_in_buffer(sTmp);
-  sprintf(sTmp+strlen(sTmp), ",%X", (unsigned int)msg.id);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.flags.extended);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.bus);
+  sprintf(sTmp+strlen(sTmp), ",%X", (unsigned int)msg.id);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.len);
   for (int i=0; i<msg.len; i++){
     sprintf(sTmp+strlen(sTmp), ",%0.2X", msg.buf[i]);
@@ -229,10 +243,9 @@ void can_callback(const CAN_message_t &msg) {
   char temp_str[128];
   can_frame_to_str(msg, temp_str);
   Serial.print("Got CAN message: ");
-  Serial.print(temp_str);
+  Serial.println(temp_str);
   write_sd_line(temp_str);
 }
-
 
 void set_next_log_filename(char* in_file){
   uint16_t file_number_to_try = 0;
@@ -254,6 +267,9 @@ void set_next_log_filename(char* in_file){
 }
 
 void setup() {
+  can_config_1.port = 1;
+  can_config_2.port = 2;
+  can_config_3.port = 3;
   Serial.begin(115200); 
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
@@ -261,22 +277,43 @@ void setup() {
   // if (!sd_fat.begin(chipSelect, SPI_HALF_SPEED)) sd.initErrorHalt();
 
   #ifdef DEBUG
-    delay(1000); // delay 1 seconds to allow computer to open serial connection
+    delay(2000); // delay 1 seconds to allow computer to open serial connection
   #endif
   pinMode(LED_BUILTIN, OUTPUT);
 
   if (!read_config_file()) Serial.println("Config File read error!");
-  print_bus_config(&can_config_1);
-  print_bus_config(&can_config_2);
-  print_bus_config(&can_config_3);
+  bus_config_to_str(&can_config_1, single_can_log_config_str);
+  Serial.println(single_can_log_config_str);
+  single_can_log_config_str[0] = '\0';
+  bus_config_to_str(&can_config_2, single_can_log_config_str);
+  Serial.println(single_can_log_config_str);
+  single_can_log_config_str[0] = '\0';
+  bus_config_to_str(&can_config_3, single_can_log_config_str);
+  Serial.println(single_can_log_config_str);
+  single_can_log_config_str[0] = '\0';
 
   // setup CANBus
-  Can3.begin();
-  Can3.setBaudRate(can_config_1.baudrate);
-  Can3.enableFIFO();
-  Can3.enableFIFOInterrupt();
-  Can3.onReceive(can_callback);
-
+  if (can_config_1.log_enabled){
+    Can1.begin();
+    Can1.setBaudRate(can_config_1.baudrate);
+    Can1.enableFIFO();
+    Can1.enableFIFOInterrupt();
+    Can1.onReceive(can_callback);
+  }
+  if (can_config_2.log_enabled){
+    Can2.begin();
+    Can2.setBaudRate(can_config_2.baudrate);
+    Can2.enableFIFO();
+    Can2.enableFIFOInterrupt();
+    Can2.onReceive(can_callback);
+  }
+  if (can_config_3.log_enabled){
+    Can3.begin();
+    Can3.setBaudRate(can_config_3.baudrate);
+    Can3.enableFIFO();
+    Can3.enableFIFOInterrupt();
+    Can3.onReceive(can_callback);
+  }
   
   Serial.println("Started");
   setSyncProvider(getTeensy3Time);
