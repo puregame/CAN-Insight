@@ -37,6 +37,7 @@ SdFile sd_file;
 char log_file_name[LOG_FILE_NAME_LENGTH] = DEFAULT_LOG_FILE_NAME;
 const int chipSelect = BUILTIN_SDCARD;
 uint16_t log_number = 0;
+uint16_t max_log_size = DEFAULT_MAX_LOG_FILE_SIZE;
 
 
 //***** setup time 
@@ -184,8 +185,11 @@ int read_config_file() {
     return 1;
   }
   JsonObject temp_object;
+  if (config_root.containsKey("max_file_size")){
+    max_log_size = config_root["max_file_size"];
+  }
 
-  if (config_root.containsKey("can1")){ // check if it is not zero or none, if so then process
+  if (config_root.containsKey("can1")){ // if can1 key exists then process it, otherwise set it to default confi
     temp_object = config_root["can1"];
     set_config_from_jsonobject(temp_object, &can_config_1);
   }
@@ -218,35 +222,6 @@ void can_frame_to_str(const CAN_message_t &msg, char* sTmp){
   strcat(sTmp, "\r\n");
 }
 
-void write_sd_line(char* line){
-  // open the file.
-  File dataFile = SD.open(log_file_name, FILE_WRITE);
-  // if the file is available, write to it:
-  if (dataFile) {
-  // digital clock display of the time
-    dataFile.print(line);
-  }
-  else{
-    Serial.println("file not opened!");
-  }
-  dataFile.close();
-  // if the file isn't open, pop up an error:
-}
-
-void can_callback(const CAN_message_t &msg) {
-  Serial.println("doing CAN callback");
-  //todo: determine how CAN messages are received
-
-  // filter by extended and standard
-  //filter by ID filter
-    // id filtering in akpc CAN_Logger uses if ((rxmsg.EID & iFilterMask) != (iFilterValue & iFilterMask)) continue;
-  char temp_str[128];
-  can_frame_to_str(msg, temp_str);
-  Serial.print("Got CAN message: ");
-  Serial.println(temp_str);
-  write_sd_line(temp_str);
-}
-
 void set_next_log_filename(char* in_file){
   uint16_t file_number_to_try = 0;
   // char file_to_try[LOG_FILE_NAME_LENGTH];
@@ -264,6 +239,39 @@ void set_next_log_filename(char* in_file){
     sprintf(&in_file[LOG_FILE_NUM_POS], "%03d", file_number_to_try);
     in_file[LOG_FILE_DOT_POS] = '.';
   }
+}
+
+void write_sd_line(char* line){
+  // open the file.
+  File dataFile = SD.open(log_file_name, FILE_WRITE);
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.print(line);
+
+    if (dataFile.size() > max_log_size){
+      set_next_log_filename(log_file_name);
+      start_log();
+    }
+  }
+  else{
+    // if the file isn't open, pop up an error:
+    Serial.println("file not opened!");
+  }
+  dataFile.close();
+}
+
+void can_callback(const CAN_message_t &msg) {
+  Serial.println("doing CAN callback");
+  //todo: determine how CAN messages are received
+
+  // filter by extended and standard
+  //filter by ID filter
+    // id filtering in akpc CAN_Logger uses if ((rxmsg.EID & iFilterMask) != (iFilterValue & iFilterMask)) continue;
+  char temp_str[128];
+  can_frame_to_str(msg, temp_str);
+  Serial.print("Got CAN message: ");
+  Serial.println(temp_str);
+  write_sd_line(temp_str);
 }
 
 void setup() {

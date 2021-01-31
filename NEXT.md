@@ -1,9 +1,11 @@
 next steps:
 
-1. Multiple CANbus logging
+
 4. timestamp in file metadata (need SDfat)
+5. better config and log file names (.json, need sdfat?)
 7. CAN bus filtering
-8. File wrapping if file gets too long (configurable file length?)
+8. Log only on specific message received OR on button press.
+9. Update readme
 
 Other:
 1. 4..20ma sensor
