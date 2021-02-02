@@ -49,6 +49,13 @@ time_t getTeensy3Time()
 }
 
 // ** begin functions
+
+void dateTime(uint16_t* date, uint16_t* time)
+{
+  *date = FAT_DATE(year(), month(), day());
+  *time = FAT_TIME(hour(), minute(), second());
+}
+
 void blink_builtin_led()
 {
     digitalWriteFast(LED_BUILTIN, !digitalReadFast(LED_BUILTIN));    
@@ -279,6 +286,7 @@ void setup() {
   can_config_2.port = 2;
   can_config_3.port = 3;
   Serial.begin(115200); 
+  SdFile::dateTimeCallback(dateTime);
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
   }
