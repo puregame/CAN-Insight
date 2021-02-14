@@ -1,6 +1,7 @@
 // general debug flag
-#define DEBUG
+// #define DEBUG
     // slows down startup to allow serial to open
+    // prints on usb serial every can message received
 
 
 
@@ -11,7 +12,7 @@
 #define DEFAULT_LOG_FILE_NAME "CAN_000.log"
 #define LOG_FILE_NUM_POS 4 // position of start of 3-set sequential numer of log
 #define LOG_FILE_DOT_POS 7
-#define DEFAULT_MAX_LOG_FILE_SIZE 1000000 // 1 million bytes = 1 gigabyte
+#define DEFAULT_MAX_LOG_FILE_SIZE 1000000000 // 1 million bytes = 1 gigabyte
 
 /// ******  config file parameters *****
 #define CONFIG_FILE_NAME "config.txt"

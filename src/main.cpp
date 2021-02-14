@@ -29,15 +29,15 @@ Timer t2; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
 // ***** setup sd card
 // setup sd card datalogging
 #include <SD.h>
+File data_file;
 // #include "SdFat.h"
 #include <SPI.h>
 // SdFat sd_fat;
 
-SdFile sd_file;
 char log_file_name[LOG_FILE_NAME_LENGTH] = DEFAULT_LOG_FILE_NAME;
 const int chipSelect = BUILTIN_SDCARD;
 uint16_t log_number = 0;
-uint16_t max_log_size = DEFAULT_MAX_LOG_FILE_SIZE;
+uint32_t max_log_size = DEFAULT_MAX_LOG_FILE_SIZE;
 
 
 //***** setup time 
@@ -126,28 +126,31 @@ void bus_config_to_str(CANBus_Config* config, char*sTmp){
   strcat(sTmp, ">");
 }
 
+void flush_sd_file(){
+  data_file.flush();
+}
+
 int start_log(){
-  File dataFile = SD.open(log_file_name, FILE_WRITE);
+  data_file = SD.open(log_file_name, FILE_WRITE);
   // if the file is available, write to it:
-  if (dataFile) {
+  if (data_file) {
     // print header file in the log
-    
     bus_config_to_str(&can_config_1, single_can_log_config_str);
-    dataFile.println(single_can_log_config_str);
+    data_file.println(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
     bus_config_to_str(&can_config_2, single_can_log_config_str);
-    dataFile.println(single_can_log_config_str);
+    data_file.println(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
     bus_config_to_str(&can_config_3, single_can_log_config_str);
-    dataFile.println(single_can_log_config_str);
+    data_file.println(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
-    dataFile.println(HEADER_CSV);
+    data_file.println(HEADER_CSV);
   }
   else{
     Serial.println("file not opened!");
     return 0;
   }
-  dataFile.close();
+  data_file.flush();
   return 1;
 }
 
@@ -162,7 +165,7 @@ void set_default_config(CANBus_Config* config){
   config->log_std=true;
 }
 
-void set_config_from_jsonobject(JsonObject json_obj, CANBus_Config* config){
+void set_can_config_from_jsonobject(JsonObject json_obj, CANBus_Config* config){
   config->baudrate = json_obj["baudrate"] | DEFAULT_BAUD_RATE;
   char bus_str[5];
   sprintf(bus_str, "CAN%d", config->port);
@@ -198,19 +201,19 @@ int read_config_file() {
 
   if (config_root.containsKey("can1")){ // if can1 key exists then process it, otherwise set it to default confi
     temp_object = config_root["can1"];
-    set_config_from_jsonobject(temp_object, &can_config_1);
+    set_can_config_from_jsonobject(temp_object, &can_config_1);
   }
   else 
     set_default_config(&can_config_1);
   if (config_root.containsKey("can2")){
     temp_object = config_root["can2"];
-    set_config_from_jsonobject(temp_object, &can_config_2);
+    set_can_config_from_jsonobject(temp_object, &can_config_2);
   }
   else
     set_default_config(&can_config_2);
   if (config_root.containsKey("can3")){
     temp_object = config_root["can3"];
-    set_config_from_jsonobject(temp_object, &can_config_3);
+    set_can_config_from_jsonobject(temp_object, &can_config_3);
   }
   else
     set_default_config(&can_config_3);
@@ -250,34 +253,34 @@ void set_next_log_filename(char* in_file){
 
 void write_sd_line(char* line){
   // open the file.
-  File dataFile = SD.open(log_file_name, FILE_WRITE);
   // if the file is available, write to it:
-  if (dataFile) {
-    dataFile.print(line);
+  if (data_file) {
+    data_file.print(line);
 
-    if (dataFile.size() > max_log_size){
+    if (data_file.size() > max_log_size){
+      data_file.close();
       set_next_log_filename(log_file_name);
       start_log();
     }
   }
   else{
     // if the file isn't open, pop up an error:
-    Serial.println("file not opened!");
+    Serial.println("file not opened! opening and trying again");
+    data_file = SD.open(log_file_name, FILE_WRITE);
+    write_sd_line(line);
   }
-  dataFile.close();
 }
 
 void can_callback(const CAN_message_t &msg) {
-  Serial.println("doing CAN callback");
-  //todo: determine how CAN messages are received
-
   // filter by extended and standard
   //filter by ID filter
     // id filtering in akpc CAN_Logger uses if ((rxmsg.EID & iFilterMask) != (iFilterValue & iFilterMask)) continue;
   char temp_str[128];
   can_frame_to_str(msg, temp_str);
-  Serial.print("Got CAN message: ");
-  Serial.println(temp_str);
+  #ifdef DEBUG
+    Serial.print("Got CAN message: ");
+    Serial.print(temp_str);
+  #endif
   write_sd_line(temp_str);
 }
 
@@ -308,28 +311,8 @@ void setup() {
   Serial.println(single_can_log_config_str);
   single_can_log_config_str[0] = '\0';
 
-  // setup CANBus
-  if (can_config_1.log_enabled){
-    Can1.begin();
-    Can1.setBaudRate(can_config_1.baudrate);
-    Can1.enableFIFO();
-    Can1.enableFIFOInterrupt();
-    Can1.onReceive(can_callback);
-  }
-  if (can_config_2.log_enabled){
-    Can2.begin();
-    Can2.setBaudRate(can_config_2.baudrate);
-    Can2.enableFIFO();
-    Can2.enableFIFOInterrupt();
-    Can2.onReceive(can_callback);
-  }
-  if (can_config_3.log_enabled){
-    Can3.begin();
-    Can3.setBaudRate(can_config_3.baudrate);
-    Can3.enableFIFO();
-    Can3.enableFIFOInterrupt();
-    Can3.onReceive(can_callback);
-  }
+  Serial.print("Max log file size: ");
+  Serial.println(max_log_size);
   
   Serial.println("Started");
   setSyncProvider(getTeensy3Time);
@@ -348,11 +331,38 @@ void setup() {
   //Setup Periodic blink timer 
 //  pinMode(LED_BUILTIN,OUTPUT);  
   t1.beginPeriodic(blink_builtin_led, 100'000); // 100ms blink every 100ms
+  t2.beginPeriodic(flush_sd_file, 1'000'000); // flush sd file every second
 //
   // t2.beginPeriodic(write_sd_data, 2000'000); // write to sd card every 2s
 
   Serial.print("Current Time: ");
   serial_print_current_time();
+
+  // setup CANBus
+  if (can_config_1.log_enabled){
+    Serial.println("Beginning CAN1"); 
+    Can1.begin();
+    Can1.setBaudRate(can_config_1.baudrate);
+    Can1.enableFIFO();
+    Can1.enableFIFOInterrupt();
+    Can1.onReceive(can_callback);
+  }
+  if (can_config_2.log_enabled){
+    Serial.println("Beginning CAN2"); 
+    Can2.begin();
+    Can2.setBaudRate(can_config_2.baudrate);
+    Can2.enableFIFO();
+    Can2.enableFIFOInterrupt();
+    Can2.onReceive(can_callback);
+  }
+  if (can_config_3.log_enabled){
+    Serial.println("Beginning CAN3"); 
+    Can3.begin();
+    Can3.setBaudRate(can_config_3.baudrate);
+    Can3.enableFIFO();
+    Can3.enableFIFOInterrupt();
+    Can3.onReceive(can_callback);
+  }
 }
 
 unsigned long target_time = 0L ;
