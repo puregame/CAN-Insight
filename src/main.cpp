@@ -13,9 +13,13 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 // use https://github.com/tonton81/FlexCAN_T4 library for receiving CAN data
 
 // look into: https://github.com/greiman/SdFat-beta/blob/master/examples/ExFatLogger/ExFatLogger.ino
+
+// configuration variables
 CANBus_Config can_config_1; // initilize three canbus configurations for teensy 4.1
 CANBus_Config can_config_2;
 CANBus_Config can_config_3;
+char unit_type[UNIT_INFO_MAX_LEN];
+char unit_number[UNIT_INFO_MAX_LEN];
 char single_can_log_config_str[160];
 
 // ******* Setup timers
@@ -135,6 +139,11 @@ int start_log(){
   // if the file is available, write to it:
   if (data_file) {
     // print header file in the log
+    data_file.print("{\"unit_type\": \"");
+    data_file.print(unit_type);
+    data_file.print("\", \"unit_number\": \"");
+    data_file.print(unit_number);
+    data_file.println("\"}");
     bus_config_to_str(&can_config_1, single_can_log_config_str);
     data_file.println(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
@@ -197,6 +206,12 @@ int read_config_file() {
   JsonObject temp_object;
   if (config_root.containsKey("max_file_size")){
     max_log_size = config_root["max_file_size"];
+  }
+  if (config_root.containsKey("unit_type")){
+    strlcpy(unit_type, config_root["unit_type"] | "", UNIT_INFO_MAX_LEN);
+  }
+  if (config_root.containsKey("unit_number")){
+    strlcpy(unit_number, config_root["unit_number"] | "", UNIT_INFO_MAX_LEN);
   }
 
   if (config_root.containsKey("can1")){ // if can1 key exists then process it, otherwise set it to default confi

@@ -17,6 +17,7 @@
 /// ******  config file parameters *****
 #define CONFIG_FILE_NAME "config.txt"
 // #define CONFIG_FILE_NAME "config.json"
+#define UNIT_INFO_MAX_LEN 11
 
 #define HEADER_CSV "datetime, CAN_EXT, CAN_BUS, CAN_ID, CAN_LEN, Data0, Data1, Data2, Data3, Data4, Data5, Data6, Data7"
 

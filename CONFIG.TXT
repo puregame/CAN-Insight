@@ -1,5 +1,7 @@
 {
     "max_file_size": 1000000,
+    "unit_type": "machine123",
+    "unit_number": "E123123123",
     "can1":{
         "baudrate": 250000,
         "bus_name": "My awesome bus",
