@@ -111,23 +111,23 @@ void check_serial_time(){
 }
 
 void bus_config_to_str(CANBus_Config* config, char*sTmp){
-  strcat(sTmp, "Bus config <bus number: ");
+  strcat(sTmp, "{\"bus_number\": ");
   sprintf(sTmp+strlen(sTmp), "%d", (unsigned int)config->port);
-  strcat(sTmp, "; bus name: ");
+  strcat(sTmp, ", \"bus_name\": \"");
   strcat(sTmp, config->bus_name);
-  strcat(sTmp, "; baudrate: ");
+  strcat(sTmp, "\", \"baudrate\": ");
   sprintf(sTmp+strlen(sTmp), "%d", config->baudrate);
-  strcat(sTmp, "; log_std: ");
+  strcat(sTmp, ", \"log_std\": ");
   sprintf(sTmp+strlen(sTmp), "%d", config->log_std);
-  strcat(sTmp, "; log_ext: ");
+  strcat(sTmp, ", \"log_ext\": ");
   sprintf(sTmp+strlen(sTmp), "%d", config->log_ext);
-  strcat(sTmp, "; id_filter_mask");
+  strcat(sTmp, ", \"id_filter_mask\": ");
   sprintf(sTmp+strlen(sTmp), "%d", config->id_filter_mask);
-  strcat(sTmp, "; id_filter_value");
+  strcat(sTmp, ", \"id_filter_value\": ");
   sprintf(sTmp+strlen(sTmp), "%d", config->id_filter_value);
-  strcat(sTmp, "; log_enabled: ");
+  strcat(sTmp, ", \"log_enabled\": ");
   sprintf(sTmp+strlen(sTmp), "%d", config->log_enabled);
-  strcat(sTmp, ">");
+  strcat(sTmp, "}");
 }
 
 void flush_sd_file(){
@@ -143,16 +143,19 @@ int start_log(){
     data_file.print(unit_type);
     data_file.print("\", \"unit_number\": \"");
     data_file.print(unit_number);
-    data_file.println("\"}");
+    data_file.print("\", \"can_1\": ");
     bus_config_to_str(&can_config_1, single_can_log_config_str);
-    data_file.println(single_can_log_config_str);
+    data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
+    data_file.print("}, \"can_2\": ");
     bus_config_to_str(&can_config_2, single_can_log_config_str);
-    data_file.println(single_can_log_config_str);
+    data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
+    data_file.print("}, \"can_3\": ");
     bus_config_to_str(&can_config_3, single_can_log_config_str);
-    data_file.println(single_can_log_config_str);
+    data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
+    data_file.println("}");
     data_file.println(HEADER_CSV);
   }
   else{
@@ -188,8 +191,6 @@ void set_can_config_from_jsonobject(JsonObject json_obj, CANBus_Config* config){
 }
 
 int read_config_file() {
-  // to do: implement reading config file
-  // baud, ack, log_std, log_ext,
   Serial.println("reading Config file");
   File config_file = SD.open(CONFIG_FILE_NAME, FILE_READ);
   StaticJsonDocument<512> config_doc;
@@ -357,15 +358,15 @@ void setup() {
   if (can_config_1.log_enabled){
     Serial.println("Beginning CAN1"); 
     Can1.begin();
-    Can1.setBaudRate(can_config_1.baudrate);
+    Can1.setBaudRate(can_config_1.baudrate*1000);
     Can1.enableFIFO();
     Can1.enableFIFOInterrupt();
     Can1.onReceive(can_callback);
   }
   if (can_config_2.log_enabled){
-    Serial.println("Beginning CAN2"); 
+    Serial.println("Beginning CAN2");
     Can2.begin();
-    Can2.setBaudRate(can_config_2.baudrate);
+    Can2.setBaudRate(can_config_2.baudrate*1000);
     Can2.enableFIFO();
     Can2.enableFIFOInterrupt();
     Can2.onReceive(can_callback);
@@ -373,7 +374,7 @@ void setup() {
   if (can_config_3.log_enabled){
     Serial.println("Beginning CAN3"); 
     Can3.begin();
-    Can3.setBaudRate(can_config_3.baudrate);
+    Can3.setBaudRate(can_config_3.baudrate*1000);
     Can3.enableFIFO();
     Can3.enableFIFOInterrupt();
     Can3.onReceive(can_callback);
@@ -398,4 +399,3 @@ void loop ()
 
   check_serial_time();
 }
-

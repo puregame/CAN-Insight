@@ -8,6 +8,6 @@ struct CANBus_Config {
   bool log_ext;
   int id_filter_mask;
   int id_filter_value;
-  char bus_name[20];
+  char bus_name[21];
   bool log_enabled = true;
 };

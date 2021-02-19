@@ -3,7 +3,7 @@
     "unit_type": "machine123",
     "unit_number": "E123123123",
     "can1":{
-        "baudrate": 250000,
+        "baudrate": 250,
         "bus_name": "My awesome bus",
         "log_extended_frames": false,
         "log_standard_frames": false,
