@@ -42,6 +42,7 @@ char log_file_name[LOG_FILE_NAME_LENGTH] = DEFAULT_LOG_FILE_NAME;
 const int chipSelect = BUILTIN_SDCARD;
 uint16_t log_number = 0;
 uint32_t max_log_size = DEFAULT_MAX_LOG_FILE_SIZE;
+unsigned long log_start_millis;
 
 
 //***** setup time 
@@ -147,15 +148,20 @@ int start_log(){
     bus_config_to_str(&can_config_1, single_can_log_config_str);
     data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
-    data_file.print("}, \"can_2\": ");
+    data_file.print(", \"can_2\": ");
     bus_config_to_str(&can_config_2, single_can_log_config_str);
     data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
-    data_file.print("}, \"can_3\": ");
+    data_file.print(", \"can_3\": ");
     bus_config_to_str(&can_config_3, single_can_log_config_str);
     data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
-    data_file.println("}");
+    data_file.print(", \"log_start_time\": \"");
+    char s_tmp[30];
+    set_current_time_in_buffer(s_tmp);
+    data_file.print(s_tmp);
+    data_file.println("\"}");
+    log_start_millis = millis();
     data_file.println(HEADER_CSV);
   }
   else{
@@ -236,10 +242,14 @@ int read_config_file() {
   return 1;
 }
 
+void set_time_since_log_start_in_buffer(char* sTmp){
+  sprintf(sTmp, "%3.3f", (millis()-log_start_millis)/1000.0);
+}
+
 void can_frame_to_str(const CAN_message_t &msg, char* sTmp){
-  set_current_time_in_buffer(sTmp);
-  sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.flags.extended);
+  set_time_since_log_start_in_buffer(sTmp);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.bus);
+  sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.flags.extended);
   sprintf(sTmp+strlen(sTmp), ",%X", (unsigned int)msg.id);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.len);
   for (int i=0; i<msg.len; i++){

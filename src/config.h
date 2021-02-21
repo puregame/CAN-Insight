@@ -3,8 +3,6 @@
     // slows down startup to allow serial to open
     // prints on usb serial every can message received
 
-
-
 /// ******  log file parameters *****
 //char log_file_name[40] = "CAN_LOG_XXXX-XX-XXTHH:MM:SSZ.csv";
 // #define LOG_FILE_DOT_POS 28
@@ -19,9 +17,7 @@
 // #define CONFIG_FILE_NAME "config.json"
 #define UNIT_INFO_MAX_LEN 11
 
-#define HEADER_CSV "datetime, CAN_EXT, CAN_BUS, CAN_ID, CAN_LEN, Data0, Data1, Data2, Data3, Data4, Data5, Data6, Data7"
-
-
+#define HEADER_CSV "timestamp,CAN_BUS,CAN_EXT,CAN_ID,CAN_LEN,Data0,Data1,Data2,Data3,Data4,Data5,Data6,Data7"
 
 /// ******  can parameters *****
 
