@@ -3,6 +3,11 @@
     // slows down startup to allow serial to open
     // prints on usb serial every can message received
 
+/// ***** Time Parameters *****
+#define TIME_FILE_NAME "NOW.TXT"
+#define DEFAULT_TIME 1610331025 // Jan 10 2021 
+#define TIME_HEADER  "T"   // Header tag for serial time sync message
+
 /// ******  log file parameters *****
 //char log_file_name[40] = "CAN_LOG_XXXX-XX-XXTHH:MM:SSZ.csv";
 // #define LOG_FILE_DOT_POS 28

@@ -33,7 +33,26 @@ As soon as boot up is complete the device will begin logging CAN data. A feature
 To be implemented, this is supported by the device and software but needs to be thought out and implemented. See the roadmap section for more details.
 
 ## Setting RTC
-?add command for setting RTC in linux and windows?
+### On Linux
+Connect the device to your computer via USB port and run: `date +T%s > /dev/ttyS4` (where 'ttys4' is the serial port of the teensy).
+On windows 
+
+### On Windows
+Open a powershell and run the following:
+- `[System.IO.Ports.SerialPort]::getportnames()` to list available COM ports
+- `$port= new-Object System.IO.Ports.SerialPort COM4` to create a new port object to connect to
+- `$port.open()` to open the port
+- `$port.WriteLine("T"+[int32](New-TimeSpan -Start (Get-Date "01/01/1970") -End (Get-Date)).TotalSeconds)` to write the current time to the device
+- `$port.ReadLine()` to read a single line (do this multiple times to get down to the latest lines)
+
+### Via SD Card File
+This method is not recommended since it is less accurate, the boot delay of the device could cause inaccuracies. However it is the easiest.
+1. Choose a specific time that you will to power the unit on. (typically 120 seconds or so in the future)
+2. Use an Epoch time converter: https://www.epochconverter.com/ to convert the power-on time to an epoch time.
+3. Create a new file on the SD card called NOW.TXT
+4. In the file put only the integer value of the desired epoch timestamp.
+5. Insert SD card into device.
+6. Power up device at the exact time, realtime clock will be set and NOW.txt file will be deleted.
 
 ## Output File
 The code outputs files names CAN_XXX.log where XXX is a sequential number starting at 0. After 999 logs the file name convention will change to CANXXXX.log. After 9999 logs, if the parameter overwrite_logs is true log 000 will be overwritten, otherwise no further logging will occur.

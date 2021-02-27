@@ -79,21 +79,12 @@ void serial_print_current_time(){
   Serial.println(time_buf);
 }
 
-// void fatDateTime(uint16_t *date, uint16_t *time) {
-//   *date = FAT_DATE(localTime.year, localTime.month,  localTime.date);
-//   *time = FAT_TIME(localTime.hours,localTime.minutes,localTime.seconds);
-// }
-
-#define TIME_HEADER  "T"   // Header tag for serial time sync message
 
 unsigned long processSyncMessage() {
   unsigned long pctime = 0L;
-  const unsigned long DEFAULT_TIME = 1610331025; // Jan 10 2021 
-
   if(Serial.find(TIME_HEADER)) {
      pctime = Serial.parseInt();
-     return pctime;
-     if( pctime < DEFAULT_TIME) { // check the value is a valid time (greater than Jan 1 2013)
+     if( pctime < DEFAULT_TIME) { // check the value is a valid time (greater than Jan 10 2021)
        pctime = 0L; // return 0 to indicate that the time is not valid
      }
   }
@@ -194,6 +185,27 @@ void set_can_config_from_jsonobject(JsonObject json_obj, CANBus_Config* config){
   config->id_filter_value = json_obj["id_filter_value"] | 0;
   ;
 
+}
+
+void read_time_file() {
+  Serial.println("Reading Time file");
+  if (SD.exists(TIME_FILE_NAME)){
+    File time_file = SD.open(TIME_FILE_NAME, FILE_READ);
+    time_file.seek(TIME_HEADER);
+    unsigned long pctime = 0L;
+    pctime = time_file.parseInt();
+    Serial.println(pctime);
+    if( pctime > DEFAULT_TIME) { // check the value is a valid time (greater than Jan 10 2021)
+      Teensy3Clock.set(pctime);
+      Serial.print("Set new time via SD Card: ");
+      serial_print_current_time();
+    }
+    else{
+      Serial.println("SD Card time too old, known bad time");
+    }
+    time_file.close();
+    SD.remove(TIME_FILE_NAME);
+  }
 }
 
 int read_config_file() {
@@ -319,6 +331,7 @@ void setup() {
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
   }
+  read_time_file();
   // if (!sd_fat.begin(chipSelect, SPI_HALF_SPEED)) sd.initErrorHalt();
 
   #ifdef DEBUG
@@ -405,6 +418,7 @@ void loop ()
   //    Serial.print("Current Time: ");
   //    print_current_time();
   //    blink_builtin_led();
+    serial_print_current_time();
   }
 
   check_serial_time();
