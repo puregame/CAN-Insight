@@ -258,6 +258,7 @@ void can_callback(const CAN_message_t &msg) {
 }
 
 void setup() {
+  setup_led();
   can_config_1.port = 1;
   can_config_2.port = 2;
   can_config_3.port = 3;
@@ -272,7 +273,6 @@ void setup() {
   #ifdef DEBUG
     delay(2000); // delay 1 seconds to allow computer to open serial connection
   #endif
-  pinMode(LED_BUILTIN, OUTPUT);
 
   if (!read_config_file()) Serial.println("Config File read error!");
   bus_config_to_str(&can_config_1, single_can_log_config_str);

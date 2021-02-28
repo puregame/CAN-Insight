@@ -3,6 +3,13 @@
 
 byte rgb_status = 0;
 
+void setup_led(){
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_RED_PIN, OUTPUT);
+  pinMode(LED_GREEN_PIN, OUTPUT);
+  pinMode(LED_BLUE_PIN, OUTPUT);
+  rgb_led_orange_low();
+}
 void rgb_led_off() {
   analogWrite(LED_RED_PIN, LED_PWM_OFF);
   analogWrite(LED_GREEN_PIN, LED_PWM_OFF);
@@ -11,6 +18,11 @@ void rgb_led_off() {
 void rgb_led_red_low() {
   rgb_led_off();
   analogWrite(LED_RED_PIN, LED_PWM_LOW);
+}
+void rgb_led_orange_low() {
+  rgb_led_off();
+  analogWrite(LED_RED_PIN, LED_PWM_BRIGHT+30);
+  analogWrite(LED_GREEN_PIN, LED_PWM_LOW);
 }
 void rgb_led_green_low() {
   rgb_led_off();

@@ -11,5 +11,7 @@ void rgb_led_blue_low();
 void rgb_led_red_high();
 void rgb_led_green_high();
 void rgb_led_blue_high();
+void rgb_led_orange_low();
+void setup_led();
 
 void cycle_rgb_led();
