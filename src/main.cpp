@@ -1,8 +1,11 @@
-#include "config.h"
-#include "datatypes.cpp"
+
 #include "Arduino.h"
 #include <FlexCAN_T4.h>
 #include <ArduinoJson.h>
+#include "config.h"
+#include "datatypes.cpp"
+#include "rgb_led.h"
+#include "time_manager.h"
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; //orig RX_SIZE_256 TX_SIZE_64
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2; //orig RX_SIZE_256 TX_SIZE_64
@@ -45,62 +48,14 @@ uint32_t max_log_size = DEFAULT_MAX_LOG_FILE_SIZE;
 unsigned long log_start_millis;
 
 
-//***** setup time 
-#include <TimeLib.h>
-#include <time.h>
-time_t getTeensy3Time()
-{
-  return Teensy3Clock.get();
-}
-
 // ** begin functions
 
-void dateTime(uint16_t* date, uint16_t* time)
-{
-  *date = FAT_DATE(year(), month(), day());
-  *time = FAT_TIME(hour(), minute(), second());
-}
 
 void blink_builtin_led()
 {
     digitalWriteFast(LED_BUILTIN, !digitalReadFast(LED_BUILTIN));    
 }
 
-void set_current_time_in_buffer(char* str_addr){
-  // format as ISO datetime like 2021-01-10T20:14:09Z
-  time_t seconds = getTeensy3Time();
-  strftime(str_addr, 21, "%Y-%m-%dT%H:%M:%S.", gmtime(&seconds));
-  sprintf(str_addr+strlen(str_addr), "%03dZ", millis()%1000);
-}
-
-void serial_print_current_time(){
-  char time_buf[40];
-  set_current_time_in_buffer(time_buf);
-  Serial.println(time_buf);
-}
-
-
-unsigned long processSyncMessage() {
-  unsigned long pctime = 0L;
-  if(Serial.find(TIME_HEADER)) {
-     pctime = Serial.parseInt();
-     if( pctime < DEFAULT_TIME) { // check the value is a valid time (greater than Jan 10 2021)
-       pctime = 0L; // return 0 to indicate that the time is not valid
-     }
-  }
-  return pctime;
-}
-
-void check_serial_time(){
-  if (Serial.available()) {
-    time_t t = processSyncMessage();
-    if (t != 0) {
-      Teensy3Clock.set(t); // set the RTC
-      Serial.print("Set new serial time: ");
-      serial_print_current_time();
-    }
-  }
-}
 
 void bus_config_to_str(CANBus_Config* config, char*sTmp){
   strcat(sTmp, "{\"bus_number\": ");
@@ -187,26 +142,6 @@ void set_can_config_from_jsonobject(JsonObject json_obj, CANBus_Config* config){
 
 }
 
-void read_time_file() {
-  Serial.println("Reading Time file");
-  if (SD.exists(TIME_FILE_NAME)){
-    File time_file = SD.open(TIME_FILE_NAME, FILE_READ);
-    time_file.seek(TIME_HEADER);
-    unsigned long pctime = 0L;
-    pctime = time_file.parseInt();
-    Serial.println(pctime);
-    if( pctime > DEFAULT_TIME) { // check the value is a valid time (greater than Jan 10 2021)
-      Teensy3Clock.set(pctime);
-      Serial.print("Set new time via SD Card: ");
-      serial_print_current_time();
-    }
-    else{
-      Serial.println("SD Card time too old, known bad time");
-    }
-    time_file.close();
-    SD.remove(TIME_FILE_NAME);
-  }
-}
 
 int read_config_file() {
   Serial.println("reading Config file");
@@ -354,14 +289,14 @@ void setup() {
   Serial.println(max_log_size);
   
   Serial.println("Started");
-  setSyncProvider(getTeensy3Time);
+  set_sync_provider_teensy3();
   
   set_next_log_filename(log_file_name);
   Serial.print("Logging on file:");
   Serial.println(log_file_name);
   start_log();
     
-  if (timeStatus()!= timeSet) {
+  if (! rtc_sync_complete()) {
     Serial.println("Unable to sync with the RTC");
   } else {
     Serial.println("Sync with RTC complete");
@@ -371,7 +306,7 @@ void setup() {
 //  pinMode(LED_BUILTIN,OUTPUT);  
   t1.beginPeriodic(blink_builtin_led, 100'000); // 100ms blink every 100ms
   t2.beginPeriodic(flush_sd_file, 1'000'000); // flush sd file every second
-//
+//getTeensy3Time
   // t2.beginPeriodic(write_sd_data, 2000'000); // write to sd card every 2s
 
   Serial.print("Current Time: ");
@@ -413,12 +348,13 @@ void loop ()
   Can3.events();
   if (millis () - target_time >= TEN_SECOND_PERIOD)
   {
-    target_time += TEN_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen
+    target_time += ONE_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen
   //    write_sd_data();
   //    Serial.print("Current Time: ");
   //    print_current_time();
   //    blink_builtin_led();
-    serial_print_current_time();
+    // serial_print_current_time();
+    cycle_rgb_led();
   }
 
   check_serial_time();
