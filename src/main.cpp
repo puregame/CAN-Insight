@@ -1,11 +1,11 @@
 #include "Arduino.h"
 #include <FlexCAN_T4.h>
-#include <ArduinoJson.h>
 #include <SD.h>
 #include "config.h"
 #include "datatypes.h"
 #include "rgb_led.h"
 #include "time_manager.h"
+#include "config_manager.h"
 #include "can_log.h"
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; //orig RX_SIZE_256 TX_SIZE_64
@@ -19,13 +19,7 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 // look into: https://github.com/greiman/SdFat-beta/blob/master/examples/ExFatLogger/ExFatLogger.ino
 
 // configuration variables
-CANBus_Config can_config_1; // initilize three canbus configurations for teensy 4.1
-CANBus_Config can_config_2;
-CANBus_Config can_config_3;
-char unit_type[UNIT_INFO_MAX_LEN];
-char unit_number[UNIT_INFO_MAX_LEN];
-uint32_t max_log_size = DEFAULT_MAX_LOG_FILE_SIZE;
-
+Config_Manager config;
 SD_CAN_Logger sd_logger;
 System_Status status;
 
@@ -52,77 +46,6 @@ void blink_builtin_led()
     digitalWriteFast(LED_BUILTIN, !digitalReadFast(LED_BUILTIN));    
 }
 
-
-void set_default_config(CANBus_Config* config){
-  Serial.print("Setting default config for bus: ");
-  Serial.println(config->port);
-  sprintf(config->bus_name, "CAN%d", config->port);
-  config->baudrate=DEFAULT_BAUD_RATE;
-  config->id_filter_mask=0;
-  config->id_filter_value=0;
-  config->log_ext=true;
-  config->log_std=true;
-}
-
-void set_can_config_from_jsonobject(JsonObject json_obj, CANBus_Config* config){
-  config->baudrate = json_obj["baudrate"] | DEFAULT_BAUD_RATE;
-  char bus_str[5];
-  sprintf(bus_str, "CAN%d", config->port);
-  strlcpy(config->bus_name, json_obj["bus_name"] | bus_str, sizeof(config->bus_name));
-  config->log_ext = json_obj["log_extended_frames"] | true;
-  config->log_std = json_obj["log_standard_frames"] | true;
-  config->id_filter_mask = json_obj["id_filter_mask"] | 0;
-  config->id_filter_value = json_obj["id_filter_value"] | 0;
-  ;
-
-}
-
-int read_config_file() {
-  Serial.println("reading Config file");
-  File config_file = SD.open(CONFIG_FILE_NAME, FILE_READ);
-  StaticJsonDocument<512> config_doc;
-  DeserializationError error = deserializeJson(config_doc, config_file);
-  config_file.close();
-  JsonObject config_root = config_doc.as<JsonObject>();
-  if (error){
-    Serial.println(F("Failed to read file, using default configuration"));
-    set_default_config(&can_config_1);
-    set_default_config(&can_config_2);
-    set_default_config(&can_config_3);
-    return 1;
-  }
-  JsonObject temp_object;
-  if (config_root.containsKey("max_file_size")){
-    max_log_size = config_root["max_file_size"];
-  }
-  if (config_root.containsKey("unit_type")){
-    strlcpy(unit_type, config_root["unit_type"] | "", UNIT_INFO_MAX_LEN);
-  }
-  if (config_root.containsKey("unit_number")){
-    strlcpy(unit_number, config_root["unit_number"] | "", UNIT_INFO_MAX_LEN);
-  }
-
-  if (config_root.containsKey("can1")){ // if can1 key exists then process it, otherwise set it to default confi
-    temp_object = config_root["can1"];
-    set_can_config_from_jsonobject(temp_object, &can_config_1);
-  }
-  else 
-    set_default_config(&can_config_1);
-  if (config_root.containsKey("can2")){
-    temp_object = config_root["can2"];
-    set_can_config_from_jsonobject(temp_object, &can_config_2);
-  }
-  else
-    set_default_config(&can_config_2);
-  if (config_root.containsKey("can3")){
-    temp_object = config_root["can3"];
-    set_can_config_from_jsonobject(temp_object, &can_config_3);
-  }
-  else
-    set_default_config(&can_config_3);
-  return 1;
-}
-
 void can_callback(const CAN_message_t &msg) {
   // filter by extended and standard
   //filter by ID filter
@@ -146,20 +69,12 @@ void setup_from_sd_card(){
   read_time_file();
   // if (!sd_fat.begin(chipSelect, SPI_HALF_SPEED)) sd.initErrorHalt();
 
-  if (!read_config_file()) Serial.println("Config File read error!");
-  char single_can_log_config_str[160];
-  single_can_log_config_str[0] = '\0';
-  bus_config_to_str(&can_config_1, single_can_log_config_str);
-  Serial.println(single_can_log_config_str);
-  single_can_log_config_str[0] = '\0';
-  bus_config_to_str(&can_config_2, single_can_log_config_str);
-  Serial.println(single_can_log_config_str);
-  single_can_log_config_str[0] = '\0';
-  bus_config_to_str(&can_config_3, single_can_log_config_str);
-  Serial.println(single_can_log_config_str);
-  single_can_log_config_str[0] = '\0';
+  if (!config.read_config_file()) Serial.println("Config File read error!");
+  config.serial_print_bus_config_str(0);
+  config.serial_print_bus_config_str(1);
+  config.serial_print_bus_config_str(2);
   
-  sd_logger = SD_CAN_Logger(unit_type, unit_number, &can_config_1, &can_config_2, &can_config_3, max_log_size);
+  sd_logger = SD_CAN_Logger(config.unit_type, config.unit_number, config.can_configs, config.max_log_size);
   
   sd_logger.set_next_log_filename();
   Serial.print("Logging on file:");
@@ -170,25 +85,25 @@ void setup_from_sd_card(){
   t2.beginPeriodic(sd_logger.flush_sd_file, 1'000'000); // flush sd file every second
 
   // setup CANBus
-  if (can_config_1.log_enabled){
+  if (config.can_configs[0].log_enabled){
     Serial.println("Beginning CAN1");
-    Can1.setBaudRate(can_config_1.baudrate*1000);
+    Can1.setBaudRate(config.can_configs[0].baudrate*1000);
     Can1.enableFIFO();
     Can1.enableFIFOInterrupt();
     Can1.onReceive(can_callback);
     Can1.begin();
   }
-  if (can_config_2.log_enabled){
+  if (config.can_configs[1].log_enabled){
     Serial.println("Beginning CAN2");
-    Can2.setBaudRate(can_config_2.baudrate*1000);
+    Can2.setBaudRate(config.can_configs[1].baudrate*1000);
     Can2.enableFIFO();
     Can2.enableFIFOInterrupt();
     Can2.onReceive(can_callback);
     Can2.begin();
   }
-  if (can_config_3.log_enabled){
+  if (config.can_configs[2].log_enabled){
     Serial.println("Beginning CAN3");
-    Can3.setBaudRate(can_config_3.baudrate*1000);
+    Can3.setBaudRate(config.can_configs[2].baudrate*1000);
     Can3.enableFIFO();
     Can3.enableFIFOInterrupt();
     Can3.onReceive(can_callback);
@@ -200,9 +115,9 @@ void setup_from_sd_card(){
 
 void setup() {
   setup_led();
-  can_config_1.port = 1;
-  can_config_2.port = 2;
-  can_config_3.port = 3;
+  config.can_configs[0].port = 1;
+  config.can_configs[1].port = 2;
+  config.can_configs[2].port = 3;
   t1.beginPeriodic(blink_builtin_led, 100'000); // 100ms blink every 100ms
   Serial.begin(115200); 
   Serial.println("Starting Program");

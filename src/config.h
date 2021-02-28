@@ -26,4 +26,4 @@
 
 /// ******  can parameters *****
 
-#define DEFAULT_BAUD_RATE 250000
+#define DEFAULT_BAUD_RATE 250

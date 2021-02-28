@@ -10,35 +10,13 @@
 
 File SD_CAN_Logger::data_file;
 
-void bus_config_to_str(CANBus_Config* config, char*sTmp){
-  strcat(sTmp, "{\"bus_number\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", (unsigned int)config->port);
-  strcat(sTmp, ", \"bus_name\": \"");
-  strcat(sTmp, config->bus_name);
-  strcat(sTmp, "\", \"baudrate\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", config->baudrate);
-  strcat(sTmp, ", \"log_std\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", config->log_std);
-  strcat(sTmp, ", \"log_ext\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", config->log_ext);
-  strcat(sTmp, ", \"id_filter_mask\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", config->id_filter_mask);
-  strcat(sTmp, ", \"id_filter_value\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", config->id_filter_value);
-  strcat(sTmp, ", \"log_enabled\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", config->log_enabled);
-  strcat(sTmp, "}");
-}
-
 SD_CAN_Logger::SD_CAN_Logger(){}
 
-SD_CAN_Logger::SD_CAN_Logger(char* _unit_type, char* _unit_number, CANBus_Config* _can_config_1,  CANBus_Config* _can_config_2, CANBus_Config* _can_config_3, uint32_t _max_log_size){
+SD_CAN_Logger::SD_CAN_Logger(char* _unit_type, char* _unit_number, CANBus_Config _can_configs[3], uint32_t _max_log_size){
     __unit_type = _unit_type;
     __unit_number = _unit_number;
     max_log_size = _max_log_size;
-    __can_config_1 = _can_config_1;
-    __can_config_2 = _can_config_2;
-    __can_config_3 = _can_config_3;
+    __can_configs = _can_configs;
 }
 
 void SD_CAN_Logger::flush_sd_file(){
@@ -63,15 +41,15 @@ int SD_CAN_Logger::start_log(){
     data_file.print(__unit_number);
     data_file.print("\", \"can_1\": ");
     single_can_log_config_str[0] = '\0';
-    bus_config_to_str(__can_config_1, single_can_log_config_str);
+    bus_config_to_str(&__can_configs[0], single_can_log_config_str);
     data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
     data_file.print(", \"can_2\": ");
-    bus_config_to_str(__can_config_2, single_can_log_config_str);
+    bus_config_to_str(&__can_configs[1], single_can_log_config_str);
     data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
     data_file.print(", \"can_3\": ");
-    bus_config_to_str(__can_config_3, single_can_log_config_str);
+    bus_config_to_str(&__can_configs[2], single_can_log_config_str);
     data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
     data_file.print(", \"log_start_time\": \"");
