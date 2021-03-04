@@ -9,7 +9,7 @@ This project is a Teensy 4.1 based CAN logger designed to log up to 3 CAN channe
 - Up to 256GB SD card? -- Confirm this
 - project and unit identifiers in log file
 
-## Config file:
+## Device Configuration
 The device is dynamically configurable by use of a JSON config file placed at the top-level directory of the SD card named `CONFIG.TXT`. If the config file does not exist some ~reasonable~ default values will be used. If any config value does not exist in the config file it will be defaulted to these values as well.
 
 Config file parameters
@@ -31,6 +31,19 @@ As soon as boot up is complete the device will begin logging CAN data. A feature
 
 ## Filtering CAN messages to log
 To be implemented, this is supported by the device and software but needs to be thought out and implemented. See the roadmap section for more details.
+
+## Status LEDs
+The CAN Insight device contains 3 status leds.
+
+1. Green LED indicates power is on the unit.
+2. Orange LED on the daughter board flashes at 5hz to indicate program is running.
+3. RGB LED indicates program status.
+
+#### RGB Status
+Orange: System is booting up.
+Red: SD Card not found or read error.
+Green: Acquiring data.
+Blue Flash: Writing data to SD Card.
 
 ## Setting RTC
 ### On Linux
@@ -62,7 +75,7 @@ The SD Card is required for data logging and configuration setting. If the SD ca
 - config.txt - see config file section for details
 
 ### Output File
-The code outputs files names CAN_XXX.log where XXX is a sequential number starting at 0. After 999 logs the file name convention will change to CANXXXX.log. After 9999 logs, if the parameter overwrite_logs is true log 000 will be overwritten, otherwise no further logging will occur.
+The code outputs files names CAN_XXX.log where XXX is a sequential number starting at 0. After 999 logs the file name convention will change to CANXXXX.log. After 9999 logs, if the parameter overwrite_logs is true log 000 will be overwritten, otherwise no further logging will occur. When the number of log files gets above 500 or so the bootup time of the device is significantly increased as the device searches for the next available log file, it is recommended to pull data off of the SD card before the number of logs gets to 1000.
 
 Each log file is a CSV file, the first line is a JSON text with the project identifier, unit identifier, and CANBus configuration.
 

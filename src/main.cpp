@@ -20,7 +20,7 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 
 // configuration variables
 Config_Manager config;
-SD_CAN_Logger sd_logger;
+SD_CAN_Logger sd_logger(&config);
 System_Status status;
 
 // ******* Setup timers
@@ -73,9 +73,9 @@ void setup_from_sd_card(){
   config.serial_print_bus_config_str(0);
   config.serial_print_bus_config_str(1);
   config.serial_print_bus_config_str(2);
-  
-  sd_logger = SD_CAN_Logger(config.unit_type, config.unit_number, config.can_configs, config.max_log_size);
-  
+
+  sd_logger.max_log_size = config.max_log_size;
+
   sd_logger.set_next_log_filename();
   Serial.print("Logging on file:");
   char log_name[20];
@@ -114,14 +114,15 @@ void setup_from_sd_card(){
 }
 
 void setup() {
+  delay(100);
   setup_led();
-  config.can_configs[0].port = 1;
-  config.can_configs[1].port = 2;
-  config.can_configs[2].port = 3;
   t1.beginPeriodic(blink_builtin_led, 100'000); // 100ms blink every 100ms
   Serial.begin(115200); 
   Serial.println("Starting Program");
   
+  config.can_configs[0].port = 1;
+  config.can_configs[1].port = 2;
+  config.can_configs[2].port = 3;
   #ifdef DEBUG
     delay(2000); // delay 1 seconds to allow computer to open serial connection
   #endif
@@ -146,13 +147,20 @@ unsigned long target_time = 0L ;
 void loop ()
 {
   Can3.events();
-  if (millis () - target_time >= ONE_SECOND_PERIOD)
-  {
-    target_time += ONE_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen
-    if (status == no_sd){
-      setup_from_sd_card();
-    }
-  }
+  // if (millis () - target_time >= ONE_SECOND_PERIOD)
+  // {
+  //   target_time += ONE_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen
+  //   if (status == no_sd){
+  //     setup_from_sd_card();
+  //   }
+  // }
+
+  // sd_logger.set_next_log_filename();
+  // char log_name[20];
+  // sd_logger.get_log_filename(log_name);
+  // Serial.println(log_name);
+  // sd_logger.start_log();
+  // delay(10);
 
   check_serial_time();
 }

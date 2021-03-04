@@ -55,6 +55,7 @@ void setup_led(){
   pinMode(LED_BLUE_PIN, OUTPUT);
   set_led_from_status(boot);
 }
+
 void cycle_rgb_led(){
   switch (rgb_status) {
     case 0:

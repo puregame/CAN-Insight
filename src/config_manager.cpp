@@ -6,21 +6,21 @@
 
 void Config_Manager::bus_config_to_str(uint8_t config_num, char*sTmp){
   strcat(sTmp, "{\"bus_number\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", (unsigned int)bus_configs[config_num].port);
+  sprintf(sTmp+strlen(sTmp), "%d", (unsigned int)can_configs[config_num].port);
   strcat(sTmp, ", \"bus_name\": \"");
-  strcat(sTmp, bus_configs[config_num].bus_name);
+  strcat(sTmp, can_configs[config_num].bus_name);
   strcat(sTmp, "\", \"baudrate\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", bus_configs[config_num].baudrate);
+  sprintf(sTmp+strlen(sTmp), "%d", can_configs[config_num].baudrate);
   strcat(sTmp, ", \"log_std\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", bus_configs[config_num].log_std);
+  sprintf(sTmp+strlen(sTmp), "%d", can_configs[config_num].log_std);
   strcat(sTmp, ", \"log_ext\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", bus_configs[config_num].log_ext);
+  sprintf(sTmp+strlen(sTmp), "%d", can_configs[config_num].log_ext);
   strcat(sTmp, ", \"id_filter_mask\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", bus_configs[config_num].id_filter_mask);
+  sprintf(sTmp+strlen(sTmp), "%d", can_configs[config_num].id_filter_mask);
   strcat(sTmp, ", \"id_filter_value\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", bus_configs[config_num].id_filter_value);
+  sprintf(sTmp+strlen(sTmp), "%d", can_configs[config_num].id_filter_value);
   strcat(sTmp, ", \"log_enabled\": ");
-  sprintf(sTmp+strlen(sTmp), "%d", bus_configs[config_num].log_enabled);
+  sprintf(sTmp+strlen(sTmp), "%d", can_configs[config_num].log_enabled);
   strcat(sTmp, "}");
 }
 
@@ -66,12 +66,14 @@ int Config_Manager::read_config_file() {
   }
   else 
     set_default_can_config(0);
+
   if (config_root.containsKey("can2")){
     temp_object = config_root["can2"];
     set_can_config_from_jsonobject(temp_object, 1);
   }
   else
     set_default_can_config(1);
+
   if (config_root.containsKey("can3")){
     temp_object = config_root["can3"];
     set_can_config_from_jsonobject(temp_object, 2);
@@ -93,7 +95,7 @@ void Config_Manager::set_can_config_from_jsonobject(JsonObject json_obj, uint8_t
 }
 
 void Config_Manager::serial_print_bus_config_str(uint8_t config_num){
-  char s_tmp[160];
-  bus_config_to_str(0, s_tmp);
+  char s_tmp[200] = "";
+  bus_config_to_str(config_num, s_tmp);
   Serial.println(s_tmp);
 }

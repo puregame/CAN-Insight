@@ -2,7 +2,8 @@
 #include "config.h"
 #include <ArduinoJson.h>
 
-
+#ifndef config_manager_
+#define config_manager_
 class Config_Manager{
     public:
         void set_default_can_config(uint8_t config_num);
@@ -13,6 +14,7 @@ class Config_Manager{
         char unit_type[UNIT_INFO_MAX_LEN];
         char unit_number[UNIT_INFO_MAX_LEN];
         uint32_t max_log_size = DEFAULT_MAX_LOG_FILE_SIZE;
-    private:
         void bus_config_to_str(uint8_t config_num, char*sTmp);
+    private:
 };
+#endif

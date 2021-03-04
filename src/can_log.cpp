@@ -1,22 +1,17 @@
-// #include "Arduino.h"
 #include <FlexCAN_T4.h>
 #include <SD.h>
 #include "datatypes.h"
 #include "config.h"
 #include "rgb_led.h"
 #include "time_manager.h"
-
 #include "can_log.h"
+#include "config_manager.h"
+#include <EEPROM.h>
 
 File SD_CAN_Logger::data_file;
 
-SD_CAN_Logger::SD_CAN_Logger(){}
-
-SD_CAN_Logger::SD_CAN_Logger(char* _unit_type, char* _unit_number, CANBus_Config _can_configs[3], uint32_t _max_log_size){
-    __unit_type = _unit_type;
-    __unit_number = _unit_number;
-    max_log_size = _max_log_size;
-    __can_configs = _can_configs;
+SD_CAN_Logger::SD_CAN_Logger(Config_Manager* _config){
+  config = _config;
 }
 
 void SD_CAN_Logger::flush_sd_file(){
@@ -31,25 +26,27 @@ void SD_CAN_Logger::set_time_since_log_start_in_buffer(char* sTmp){
 }
 
 int SD_CAN_Logger::start_log(){
+  log_enabled = false;
+  data_file.close();
   data_file = SD.open(log_file_name, FILE_WRITE);
   // if the file is available, write to it:
   if (data_file) {
     // print header file in the log
     data_file.print("{\"unit_type\": \"");
-    data_file.print(__unit_type);
+    data_file.print(config->unit_type);
     data_file.print("\", \"unit_number\": \"");
-    data_file.print(__unit_number);
+    data_file.print(config->unit_number);
     data_file.print("\", \"can_1\": ");
     single_can_log_config_str[0] = '\0';
-    bus_config_to_str(&__can_configs[0], single_can_log_config_str);
+    config->bus_config_to_str(0, single_can_log_config_str);
     data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
     data_file.print(", \"can_2\": ");
-    bus_config_to_str(&__can_configs[1], single_can_log_config_str);
+    config->bus_config_to_str(1, single_can_log_config_str);
     data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
     data_file.print(", \"can_3\": ");
-    bus_config_to_str(&__can_configs[2], single_can_log_config_str);
+    config->bus_config_to_str(2, single_can_log_config_str);
     data_file.print(single_can_log_config_str);
     single_can_log_config_str[0] = '\0';
     data_file.print(", \"log_start_time\": \"");
@@ -65,6 +62,7 @@ int SD_CAN_Logger::start_log(){
     return 0;
   }
   data_file.flush();
+  log_enabled=true;
   return 1;
 }
 
@@ -81,20 +79,35 @@ void SD_CAN_Logger::can_frame_to_str(const CAN_message_t &msg, char* sTmp){
 }
 
 void SD_CAN_Logger::set_next_log_filename(){
-  uint16_t file_number_to_try = 0;
   // char file_to_try[LOG_FILE_NAME_LENGTH];
   // strcpy(file_to_try, file);
-  sprintf(&log_file_name[LOG_FILE_NUM_POS], "%03d", file_number_to_try);
+  // EEPROM.get(0, file_number_to_try);
+  // Serial.print("Trying file from eeprom: ");
+  // Serial.println(file_number_to_try);
+  if (file_number_to_try > 999) {
+    sprintf(&log_file_name[LOG_FILE_NUM_POS-1], "%04d", file_number_to_try);  
+  }
+  else{
+    sprintf(&log_file_name[LOG_FILE_NUM_POS], "%03d", file_number_to_try);
+  }
   log_file_name[LOG_FILE_DOT_POS] = '.';
+  file_number_to_try = 0;
+  // todo: debug eeprom idea
 
   bool next_file_found = false;
   while (!next_file_found){
     if (!SD.exists(log_file_name)){
       next_file_found = true;
+      EEPROM.put(0, file_number_to_try+1);
       return;
     }
     file_number_to_try ++;
-    sprintf(&log_file_name[LOG_FILE_NUM_POS], "%03d", file_number_to_try);
+    if (file_number_to_try > 999) {
+      sprintf(&log_file_name[LOG_FILE_NUM_POS-1], "%04d", file_number_to_try);
+    }
+    else{
+      sprintf(&log_file_name[LOG_FILE_NUM_POS], "%03d", file_number_to_try);
+    }
     log_file_name[LOG_FILE_DOT_POS] = '.';
   }
 }
@@ -106,6 +119,8 @@ void SD_CAN_Logger::get_log_filename(char* name){
 void SD_CAN_Logger::write_sd_line(char* line){
   // open the file.
   // if the file is available, write to it:
+  if (!log_enabled)
+    return;
   if (data_file) {
     data_file.print(line);
 
