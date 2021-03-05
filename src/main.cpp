@@ -82,32 +82,35 @@ void setup_from_sd_card(){
   sd_logger.get_log_filename(log_name);
   Serial.println(log_name);
   sd_logger.start_log();
-  t2.beginPeriodic(sd_logger.flush_sd_file, 1'000'000); // flush sd file every second
+  // t2.beginPeriodic(sd_logger.flush_sd_file, 1'000'000); // flush sd file every second
 
   // setup CANBus
   if (config.can_configs[0].log_enabled){
     Serial.println("Beginning CAN1");
+    Can1.begin();
     Can1.setBaudRate(config.can_configs[0].baudrate*1000);
+    Can1.setMaxMB(16);
     Can1.enableFIFO();
     Can1.enableFIFOInterrupt();
     Can1.onReceive(can_callback);
-    Can1.begin();
   }
   if (config.can_configs[1].log_enabled){
     Serial.println("Beginning CAN2");
+    Can2.begin();
     Can2.setBaudRate(config.can_configs[1].baudrate*1000);
+    Can2.setMaxMB(16);
     Can2.enableFIFO();
     Can2.enableFIFOInterrupt();
     Can2.onReceive(can_callback);
-    Can2.begin();
   }
   if (config.can_configs[2].log_enabled){
     Serial.println("Beginning CAN3");
+    Can3.begin();
     Can3.setBaudRate(config.can_configs[2].baudrate*1000);
+    Can3.setMaxMB(16);
     Can3.enableFIFO();
     Can3.enableFIFOInterrupt();
     Can3.onReceive(can_callback);
-    Can3.begin();
   }
   status = waiting_for_data;
   set_led_from_status(status);
@@ -146,7 +149,7 @@ unsigned long target_time = 0L ;
 
 void loop ()
 {
-  Can3.events();
+  // Can3.events();
   // if (millis () - target_time >= ONE_SECOND_PERIOD)
   // {
   //   target_time += ONE_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen

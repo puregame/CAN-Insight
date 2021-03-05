@@ -78,37 +78,52 @@ void SD_CAN_Logger::can_frame_to_str(const CAN_message_t &msg, char* sTmp){
   strcat(sTmp, "\r\n");
 }
 
-void SD_CAN_Logger::set_next_log_filename(){
-  // char file_to_try[LOG_FILE_NAME_LENGTH];
-  // strcpy(file_to_try, file);
-  // EEPROM.get(0, file_number_to_try);
-  // Serial.print("Trying file from eeprom: ");
-  // Serial.println(file_number_to_try);
-  if (file_number_to_try > 999) {
-    sprintf(&log_file_name[LOG_FILE_NUM_POS-1], "%04d", file_number_to_try);  
+void sprintf_num_to_logfile_name(int number_to_try, char* log_name){
+  if (number_to_try > 999) {
+    sprintf(&log_name[LOG_FILE_NUM_POS-1], "%04d", number_to_try);  
   }
   else{
-    sprintf(&log_file_name[LOG_FILE_NUM_POS], "%03d", file_number_to_try);
+    sprintf(&log_name[LOG_FILE_NUM_POS], "%03d", number_to_try);
   }
-  log_file_name[LOG_FILE_DOT_POS] = '.';
-  file_number_to_try = 0;
-  // todo: debug eeprom idea
+  log_name[LOG_FILE_DOT_POS] = '.';
+}
+
+void SD_CAN_Logger::set_next_log_filename(){
+  // first test existing file, on boot this will try file number 0
+  sprintf_num_to_logfile_name(file_number_to_try, log_file_name);
+  if (!SD.exists(log_file_name)){
+      EEPROM.put(0, file_number_to_try+1);
+      #ifdef DEBUG
+        Serial.print("Saving file num to EEPROM: ");
+        Serial.println(file_number_to_try+1);
+      #endif
+      return;
+    }
+  EEPROM.get(0, file_number_to_try);
+  if (file_number_to_try > 9999){
+    file_number_to_try = 0;
+  }
+  #ifdef DEBUG
+    Serial.print("Trying file from eeprom: ");
+    Serial.println(file_number_to_try);
+  #endif
+  sprintf_num_to_logfile_name(file_number_to_try, log_file_name);
 
   bool next_file_found = false;
   while (!next_file_found){
     if (!SD.exists(log_file_name)){
-      next_file_found = true;
       EEPROM.put(0, file_number_to_try+1);
+      #ifdef DEBUG
+        Serial.print("Saving file num to EEPROM: ");
+        Serial.println(file_number_to_try+1);
+      #endif
       return;
     }
     file_number_to_try ++;
-    if (file_number_to_try > 999) {
-      sprintf(&log_file_name[LOG_FILE_NUM_POS-1], "%04d", file_number_to_try);
+    if (file_number_to_try > 9999){
+      file_number_to_try = 0;
     }
-    else{
-      sprintf(&log_file_name[LOG_FILE_NUM_POS], "%03d", file_number_to_try);
-    }
-    log_file_name[LOG_FILE_DOT_POS] = '.';
+    sprintf_num_to_logfile_name(file_number_to_try, log_file_name);
   }
 }
 
