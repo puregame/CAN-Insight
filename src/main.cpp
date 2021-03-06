@@ -12,12 +12,6 @@ FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; //orig RX_SIZE_256 TX_SIZE_64
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2; //orig RX_SIZE_256 TX_SIZE_64
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 
-// see TimeTeensy3 example for how to use time library
-
-// use https://github.com/tonton81/FlexCAN_T4 library for receiving CAN data
-
-// look into: https://github.com/greiman/SdFat-beta/blob/master/examples/ExFatLogger/ExFatLogger.ino
-
 // configuration variables
 Config_Manager config;
 SD_CAN_Logger sd_logger(&config);
@@ -30,12 +24,6 @@ using namespace TeensyTimerTool;
 //// timer for LED blinking
 Timer t1; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
 Timer t2; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
-
-// ***** setup sd card
-// setup sd card datalogging
-// #include "SdFat.h"
-// #include <SPI.h>
-// SdFat sd_fat;
 
 const int chipSelect = BUILTIN_SDCARD;
 uint16_t log_number = 0;
@@ -67,7 +55,6 @@ void setup_from_sd_card(){
     return;
   }
   read_time_file();
-  // if (!sd_fat.begin(chipSelect, SPI_HALF_SPEED)) sd.initErrorHalt();
 
   if (!config.read_config_file()) Serial.println("Config File read error!");
   config.serial_print_bus_config_str(0);
@@ -82,7 +69,7 @@ void setup_from_sd_card(){
   sd_logger.get_log_filename(log_name);
   Serial.println(log_name);
   sd_logger.start_log();
-  // t2.beginPeriodic(sd_logger.flush_sd_file, 1'000'000); // flush sd file every second
+  t2.beginPeriodic(sd_logger.flush_sd_file, 1'000'000); // flush sd file every second
 
   // setup CANBus
   if (config.can_configs[0].log_enabled){
@@ -149,21 +136,13 @@ unsigned long target_time = 0L ;
 
 void loop ()
 {
-  // Can3.events();
-  // if (millis () - target_time >= ONE_SECOND_PERIOD)
-  // {
-  //   target_time += ONE_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen
-  //   if (status == no_sd){
-  //     setup_from_sd_card();
-  //   }
-  // }
-
-  // sd_logger.set_next_log_filename();
-  // char log_name[20];
-  // sd_logger.get_log_filename(log_name);
-  // Serial.println(log_name);
-  // sd_logger.start_log();
-  // delay(10);
+  if (millis () - target_time >= ONE_SECOND_PERIOD)
+  {
+    target_time += ONE_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen
+    if (status == no_sd){
+      setup_from_sd_card();
+    }
+  }
 
   check_serial_time();
 }

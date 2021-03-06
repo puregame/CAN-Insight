@@ -70,12 +70,16 @@ This method is not recommended since it is less accurate, the boot delay of the 
 ## SD Card
 The SD Card is required for data logging and configuration setting. If the SD card is not detected the Status LED will turn RED. If the status LED is RED the system will check for an SD card every second. As soon as a card is detected the time file will be checked, configuration will be loaded and logging will begin.
 
+When the SD card is full logging will stop and no more data will be written to the SD Card. If the SD card is full and the device is restarted the status LED will remain orange and logging will not occur.
+
+NOTE: SD Card MUST be formatted in FAT32 format!
+
 ### Input files
 - now.txt - see setting time via SD method section for details
 - config.txt - see config file section for details
 
 ### Output File
-The code outputs files names CAN_XXX.log where XXX is a sequential number starting at 0. After 999 logs the file name convention will change to CANXXXX.log. After 9999 logs, if the parameter overwrite_logs is true log 000 will be overwritten, otherwise no further logging will occur. When the number of log files gets above 500 or so the bootup time of the device is significantly increased as the device searches for the next available log file, it is recommended to pull data off of the SD card before the number of logs gets to 1000.
+The code outputs files names CAN_XXX.log where XXX is a sequential number starting at 0. After 999 logs the file name convention will change to CANXXXX.log. After 9999 logs no further logging will occur.
 
 Each log file is a CSV file, the first line is a JSON text with the project identifier, unit identifier, and CANBus configuration.
 
@@ -92,5 +96,4 @@ See the [CAN Insight Log Processor](https://github.com/puregame/CANInsight-proce
 6. Wifi data connection and automatic upload to server.
 
 ## Hardware
-1. Test and validate LEDs
-2. Test and validate Wifi
+1. Test and validate Wifi

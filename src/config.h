@@ -1,5 +1,5 @@
 // general debug flag
-#define DEBUG
+// #define DEBUG
     // slows down startup to allow serial to open
     // prints on usb serial every can message received
 
