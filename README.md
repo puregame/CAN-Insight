@@ -1,13 +1,22 @@
-# Teensy 4.1 Based CAN message logger
+# CANInsight CAN logger
 
-This project is a Teensy 4.1 based CAN logger designed to log up to 3 CAN channels at configurable baudrates and with configurable CAN filters.
+This project is a 3 CAN channel CAN logger designed from the ground up for ease of use.
+
+## Why make this?
+This project was born out of the desire for a highly customizable and inexpensive CAN logger. Other solutions on the market lack realtime clock (RTC) functionality, ony have a single channel, and/or are quite expensive. Furthermore the standard DB9 connector used on most CAN loggers are not dust or water proof and these devices are not suitable for installing on vehicles for long-term testing and data collection.
 
 ## Features:
-- 3 CANBus channels.
-- CAN baudrates of 100, 250, 500, 1k.
+- Up to 3 CANBus channels (default is 2).
+- CAN baudrates of 125, 250, 500, 1k
 - RTC. Log files and entries are time-stamped
-- Up to 256GB SD card? -- Confirm this
-- project and unit identifiers in log file
+- Logs CAN data to a micro-sd card
+- Log files are tagged for specific projects/vehicle types and unit/serial/VIN (see below for details)
+- LEDs for power and logging status
+- 8-60v supported input voltages
+- Reverse polarity protection
+- Log processor to translate raw data into physical values
+- CAN termination resistors with solder jumper
+- IP44 rated case
 
 ## Device Configuration
 The device is dynamically configurable by use of a JSON config file placed at the top-level directory of the SD card named `CONFIG.TXT`. If the config file does not exist some ~reasonable~ default values will be used. If any config value does not exist in the config file it will be defaulted to these values as well.
@@ -89,11 +98,9 @@ See the [CAN Insight Log Processor](https://github.com/puregame/CANInsight-proce
 
 # Roadmap
 ## Software
-2. SD Card Full Behaivor.
-3. CAN bus filtering for individual CAN messages.
-4. Start/Stop logging on specific message ID received.
-5. Support for full exFat filenames (current limitation is 7.3 format) 
-6. Wifi data connection and automatic upload to server.
+1. CAN bus filtering for individual CAN messages.
+2. Start/Stop logging on specific message ID received.
+3. Support for full exFat filenames (current limitation is 7.3 format)
 
 ## Hardware
-1. Test and validate Wifi
+None
