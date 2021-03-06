@@ -9,7 +9,7 @@ This project is a Teensy 4.1 based CAN logger designed to log up to 3 CAN channe
 - Up to 256GB SD card? -- Confirm this
 - project and unit identifiers in log file
 
-## Config file:
+## Device Configuration
 The device is dynamically configurable by use of a JSON config file placed at the top-level directory of the SD card named `CONFIG.TXT`. If the config file does not exist some ~reasonable~ default values will be used. If any config value does not exist in the config file it will be defaulted to these values as well.
 
 Config file parameters
@@ -31,6 +31,19 @@ As soon as boot up is complete the device will begin logging CAN data. A feature
 
 ## Filtering CAN messages to log
 To be implemented, this is supported by the device and software but needs to be thought out and implemented. See the roadmap section for more details.
+
+## Status LEDs
+The CAN Insight device contains 3 status leds.
+
+1. Green LED indicates power is on the unit.
+2. Orange LED on the daughter board flashes at 5hz to indicate program is running.
+3. RGB LED indicates program status.
+
+#### RGB Status
+Orange: System is booting up.
+Red: SD Card not found or read error.
+Green: Acquiring data.
+Blue Flash: Writing data to SD Card.
 
 ## Setting RTC
 ### On Linux
@@ -54,8 +67,19 @@ This method is not recommended since it is less accurate, the boot delay of the 
 5. Insert SD card into device.
 6. Power up device at the exact time, realtime clock will be set and NOW.txt file will be deleted.
 
-## Output File
-The code outputs files names CAN_XXX.log where XXX is a sequential number starting at 0. After 999 logs the file name convention will change to CANXXXX.log. After 9999 logs, if the parameter overwrite_logs is true log 000 will be overwritten, otherwise no further logging will occur.
+## SD Card
+The SD Card is required for data logging and configuration setting. If the SD card is not detected the Status LED will turn RED. If the status LED is RED the system will check for an SD card every second. As soon as a card is detected the time file will be checked, configuration will be loaded and logging will begin.
+
+When the SD card is full logging will stop and no more data will be written to the SD Card. If the SD card is full and the device is restarted the status LED will remain orange and logging will not occur.
+
+NOTE: SD Card MUST be formatted in FAT32 format!
+
+### Input files
+- now.txt - see setting time via SD method section for details
+- config.txt - see config file section for details
+
+### Output File
+The code outputs files names CAN_XXX.log where XXX is a sequential number starting at 0. After 999 logs the file name convention will change to CANXXXX.log. After 9999 logs no further logging will occur.
 
 Each log file is a CSV file, the first line is a JSON text with the project identifier, unit identifier, and CANBus configuration.
 
@@ -65,7 +89,6 @@ See the [CAN Insight Log Processor](https://github.com/puregame/CANInsight-proce
 
 # Roadmap
 ## Software
-1. RTC set via terminal/computer.
 2. SD Card Full Behaivor.
 3. CAN bus filtering for individual CAN messages.
 4. Start/Stop logging on specific message ID received.
@@ -73,5 +96,4 @@ See the [CAN Insight Log Processor](https://github.com/puregame/CANInsight-proce
 6. Wifi data connection and automatic upload to server.
 
 ## Hardware
-1. Test and validate LEDs
-2. Test and validate Wifi
+1. Test and validate Wifi

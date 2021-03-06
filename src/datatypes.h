@@ -1,6 +1,8 @@
 // datatypes
 #include <stdint.h>
 
+#ifndef canbus_config
+#define canbus_config
 struct CANBus_Config {
   unsigned int baudrate;
   uint8_t port;
@@ -11,3 +13,5 @@ struct CANBus_Config {
   char bus_name[21];
   bool log_enabled = true;
 };
+enum System_Status{boot, no_sd, waiting_for_data, writing_sd};
+#endif

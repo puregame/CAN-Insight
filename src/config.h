@@ -9,8 +9,6 @@
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
 
 /// ******  log file parameters *****
-//char log_file_name[40] = "CAN_LOG_XXXX-XX-XXTHH:MM:SSZ.csv";
-// #define LOG_FILE_DOT_POS 28
 #define LOG_FILE_NAME_LENGTH 12
 #define DEFAULT_LOG_FILE_NAME "CAN_000.log"
 #define LOG_FILE_NUM_POS 4 // position of start of 3-set sequential numer of log
@@ -25,5 +23,4 @@
 #define HEADER_CSV "timestamp,CAN_BUS,CAN_EXT,CAN_ID,CAN_LEN,Data0,Data1,Data2,Data3,Data4,Data5,Data6,Data7"
 
 /// ******  can parameters *****
-
-#define DEFAULT_BAUD_RATE 250000
+#define DEFAULT_BAUD_RATE 250
