@@ -2,3 +2,4 @@ lib/
 .vscode/
 .vsteensy/
 Datasheets/
+src/wifi_secrets.h

@@ -103,6 +103,18 @@ void setup_from_sd_card(){
   set_led_from_status(status);
 }
 
+//** wifi stuff
+#include <SPI.h>
+#include <WiFi101.h>
+#include "wifi_secrets.h" 
+char ssid[] = SECRET_SSID;
+char pass[] = SECRET_PASS;
+WiFiClient client;
+int wifi_status = WL_IDLE_STATUS;
+char server[] = "192.168.1.173";
+void printWiFiStatus(); 
+
+
 void setup() {
   delay(100);
   setup_led();
@@ -128,11 +140,33 @@ void setup() {
   serial_print_current_time();
 
   setup_from_sd_card();
+
+  // WIFI stuff below
+  Serial.println("Starting Wifi");
+  WiFi.setPins(WIFI_CS_PIN, WIFI_IRQ_PIN, WIFI_RESET_PIN, WIFI_EN_PIN);
+
+  if (WiFi.status() == WL_NO_SHIELD) {
+    Serial.println("WiFi shield not present");
+    // don't continue:
+    while (true);
+  }
+  while (wifi_status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
+    wifi_status = WiFi.begin(ssid, pass);
+
+    // wait 1 second for connection:
+    delay(1000);
+  }
+  Serial.println("Connected to wifi");
+  printWiFiStatus();
 }
 
 unsigned long target_time = 0L ;
 #define ONE_SECOND_PERIOD 1*1000
 #define TEN_SECOND_PERIOD 10*1000
+
 
 void loop ()
 {
@@ -144,5 +178,42 @@ void loop ()
     }
   }
 
+  client.stop(); // ensure client is stopped before starting new connection
+  Serial.println("\nStarting connection to server...");
+  // if you get a connection, report back via serial:
+  if (client.connect(server, 5000)) {
+    Serial.println("connected to server");
+    // Make a HTTP request:
+    client.println("GET / HTTP/1.1");
+    client.println("Host: 192.168.1.173");
+    client.println("Connection: close");
+    client.println();
+    while (client.connected()){
+      if (client.available()) {
+        char c = client.read();
+        Serial.write(c);
+      }
+    }
+    Serial.println("disconnecting from server.");
+    client.stop();
+  }
   check_serial_time();
+}
+
+
+void printWiFiStatus() {
+  // print the SSID of the network you're attached to:
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your WiFi shield's IP address:
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print the received signal strength:
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
 }

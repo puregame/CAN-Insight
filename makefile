@@ -7,7 +7,7 @@
 # Optimize           Faster
 # Keyboard Layout    US English
 #
-# 2021-02-28 8:44 PM
+# 2021-04-02 4:34 PM
 #******************************************************************************
 SHELL            := cmd.exe
 export SHELL
@@ -21,7 +21,7 @@ LIBS_SHARED_BASE := C:\Users\MATTHE~1\DOCUME~1\Arduino\LIBRAR~1
 LIBS_SHARED      := TeensyTimerTool FlexCAN_T4 
 
 LIBS_LOCAL_BASE  := lib
-LIBS_LOCAL       := ArduinoJson SD SdFat SPI Time EEPROM 
+LIBS_LOCAL       := ArduinoHttpClient ArduinoJson EEPROM SD SdFat SPI Time WiFi101 
 
 CORE_BASE        := C:\PROGRA~2\Arduino\hardware\teensy\avr\cores\teensy4
 GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin

@@ -24,3 +24,10 @@
 
 /// ******  can parameters *****
 #define DEFAULT_BAUD_RATE 250
+
+
+// *** wifi parameters ****
+#define WIFI_CS_PIN 10
+#define WIFI_IRQ_PIN 14
+#define WIFI_RESET_PIN 9
+#define WIFI_EN_PIN 32
