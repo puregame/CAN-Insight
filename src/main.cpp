@@ -105,14 +105,17 @@ void setup_from_sd_card(){
 
 //** wifi stuff
 #include <SPI.h>
+#include <ArduinoHttpClient.h>
 #include <WiFi101.h>
 #include "wifi_secrets.h" 
 char ssid[] = SECRET_SSID;
 char pass[] = SECRET_PASS;
-WiFiClient client;
 int wifi_status = WL_IDLE_STATUS;
 char server[] = "192.168.1.173";
+int port = 5000;
 void printWiFiStatus(); 
+WiFiClient wifi;
+HttpClient http_client = HttpClient(wifi, server, port);
 
 
 void setup() {
@@ -178,25 +181,48 @@ void loop ()
     }
   }
 
-  client.stop(); // ensure client is stopped before starting new connection
-  Serial.println("\nStarting connection to server...");
-  // if you get a connection, report back via serial:
-  if (client.connect(server, 5000)) {
-    Serial.println("connected to server");
-    // Make a HTTP request:
-    client.println("GET / HTTP/1.1");
-    client.println("Host: 192.168.1.173");
-    client.println("Connection: close");
-    client.println();
-    while (client.connected()){
-      if (client.available()) {
-        char c = client.read();
-        Serial.write(c);
+  // http_client.post("/", "text/plain", "this is a body");// read the status code and body of the response
+  // int statusCode = http_client.responseStatusCode();
+  // String response = http_client.responseBody();
+  String request_uri = "/data_file/?unit_type=";
+  request_uri = request_uri+"test"+"&unit_number=" + "test" + "&log_time=" + "2021-03-06T12-46-01-466Z";
+  http_client.beginRequest();
+  http_client.get(request_uri);
+  http_client.endRequest();
+  
+  if (http_client.responseStatusCode() == 404) {
+    Serial.println("Got 404 status code, will upload file");
+    Serial.println("Connecting to server...");
+      if (wifi.connect(server, port)) {
+        Serial.println("- connected");
+    #define LOG_NAME "CAN_008.LOG"
+        wifi.print("POST /data_file/?log_name=");
+        wifi.print(LOG_NAME);
+        wifi.println(" HTTP/1.1");
+        wifi.println("Host: 192.168.1.173");
+        wifi.println("User-Agent: Arduino/1.0");
+        wifi.println("Connection: close");
+    //    wifi.println("Content-Type: application/x-www-form-urlencoded");
+        wifi.println("Content-Type: text/plain; charset=UTF-8");
+        wifi.print("Content-Length: ");
+        
+        Serial.println("reading Config file");
+        File send_file = SD.open(LOG_NAME, FILE_READ);
+        wifi.println(send_file.size());
+        wifi.println();
+        for (int i = 0; i < send_file.size(); i++){
+          wifi.write(send_file.read());
+        }
+        Serial.println("- done");
       }
-    }
-    Serial.println("disconnecting from server.");
-    client.stop();
+
   }
+  else
+    Serial.println("Got not 404 status code, will not upload file");
+    
+  Serial.println("Wait 1 seconds");
+  delay(1000);
+
   check_serial_time();
 }
 
