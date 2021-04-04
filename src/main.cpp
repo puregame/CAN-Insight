@@ -105,19 +105,13 @@ void setup_from_sd_card(){
 }
 
 //** wifi stuff
-#include <SPI.h>
-#include <ArduinoHttpClient.h>
-#include <WiFi101.h>
-#include "wifi_secrets.h" 
-char ssid[] = SECRET_SSID;
-char pass[] = SECRET_PASS;
-int wifi_status = WL_IDLE_STATUS;
+
 char server[] = "192.168.1.173";
 int port = 5000;
-void printWiFiStatus(); 
-WiFiClient wifi;
-HttpClient http_client = HttpClient(wifi, server, port);
-
+#include "wifi_manager.h"
+#include "data_uploader.h"
+Wifi_Manager wifi_manager = Wifi_Manager();
+DataUploader data_uploader = DataUploader(wifi_manager.get_client(), server, port);
 
 void setup() {
   delay(100);
@@ -146,32 +140,18 @@ void setup() {
   setup_from_sd_card();
 
   // WIFI stuff below
-  pinMode(WIFI_RESET_PIN, OUTPUT);
-  digitalWriteFast(WIFI_RESET_PIN, HIGH);
-  pinMode(WIFI_EN_PIN, OUTPUT);
-  digitalWriteFast(WIFI_EN_PIN, LOW);
-  delay(100); // attempt to reset wifi chip
-  SPI.setClockDivider(8);
-
   Serial.println("Starting Wifi");
-  WiFi.setPins(WIFI_CS_PIN, WIFI_IRQ_PIN, WIFI_RESET_PIN, WIFI_EN_PIN);
+  wifi_manager.set_new_saved_network("Linksys Matt", "7056700081");
+  wifi_manager.search_and_connect();
 
-  if (WiFi.status() == WL_NO_SHIELD) {
-    Serial.println("WiFi shield not present");
-    // don't continue:
-    while (true);
+  // test connecting to a server
+  WiFiClient client = wifi_manager.get_client();
+  if (wifi_manager.get_status() == WL_CONNECTED){
+    Serial.println("Connected to network, trying upload data");
+    data_uploader.upload_data();
+    Serial.println("uploaded data");
   }
-  while (wifi_status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to SSID: ");
-    Serial.println(ssid);
-    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
-    wifi_status = WiFi.begin(ssid, pass);
 
-    // wait 1 second for connection:
-    delay(1000);
-  }
-  Serial.println("Connected to wifi");
-  printWiFiStatus();
 }
 
 unsigned long target_time = 0L ;
@@ -188,50 +168,6 @@ void loop ()
       setup_from_sd_card();
     }
   }
-  String request_uri = "/data_file/?unit_type=";
-  request_uri = request_uri+"test"+"&unit_number=" + "test" + "&log_time=" + "2021-03-06T12-46-01-466Z";
-  
-  http_client.beginRequest();
-  http_client.get(request_uri);
-  http_client.endRequest();
-  int status_code = http_client.responseStatusCode();
-  
-  if (status_code == 404) {
-    Serial.println("Got 404 status code, will upload file");
-      if (wifi.connect(server, port)) {
-        Serial.println("- connected to server");
-    #define LOG_NAME "CAN_001.LOG"
-        wifi.print("POST /data_file/?log_name=");
-        wifi.print(LOG_NAME);
-        wifi.println(" HTTP/1.1");
-        wifi.println("User-Agent: Arduino/1.0");
-    //    wifi.println("Content-Type: application/x-www-form-urlencoded");
-        wifi.println("Content-Type: text/plain");
-        wifi.print("Content-Length: ");
-        
-        Serial.println("reading data file");
-        File send_file = SD.open(LOG_NAME, FILE_READ);
-        wifi.println(send_file.size());
-        wifi.println();
-        // for (int i = 0; i < send_file.size(); i++){
-        //   wifi.write(send_file.read());
-        // }
-        #define FILE_BUF_LEN 1300
-        char buf[FILE_BUF_LEN] = "";
-        unsigned int i = 0;
-        while (i < send_file.size()){
-          buf[0] = '\0'; // clear the buffer before reading more data
-          send_file.read(buf, FILE_BUF_LEN-2);
-          wifi.write(buf, FILE_BUF_LEN-2);
-          i += FILE_BUF_LEN-2;
-      }
-        }
-
-        
-
-  }
-  else
-    Serial.println("Got not 404 status code, will not upload file");
     
   Serial.println("Wait 10 seconds");
   delay(10000);

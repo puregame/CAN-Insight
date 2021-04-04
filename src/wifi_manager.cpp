@@ -1,6 +1,49 @@
+#include "config.h"
 #include "wifi_manager.h"
 
-void Wifi_Manager::print_wifi_status(){
+Wifi_Manager::Wifi_Manager(){
+  WiFi.setPins(WIFI_CS_PIN, WIFI_IRQ_PIN, WIFI_RESET_PIN, WIFI_EN_PIN);
+//   SPI.setClockDivider(8); // may need this to slow down the transmission rate?
+}
+
+int Wifi_Manager::get_status(){
+    return WiFi.status();
+}
+
+WiFiClient& Wifi_Manager::get_client(){
+  return &wifi_client;
+}
+
+bool Wifi_Manager::search_and_connect(){
+  // check if shield is present
+  if (WiFi.status() == WL_NO_SHIELD) {
+    Serial.println("WiFi module not present or not communicating");
+    // don't continue:
+    return false;
+  }
+  uint8 num_ssid = WiFi.scanNetworks();
+
+  for (uint8 i=0; i < num_ssid; i++){
+    for (uint8 j=0; j < MAX_SAVED_NETWORK_COUNT; j++){
+      if (strcmp(WiFi.SSID(i), possible_networks[j].ssid) == 0){
+        Serial.print("Found known netowrk, attmpt to connect with ssid ");
+        Serial.print(possible_networks[j].ssid);
+        WiFi.begin(possible_networks[j].ssid, possible_networks[j].password);
+        if (WiFi.status() != WL_CONNECTED) {
+          Serial.println("Connection failed");
+          print_wifi_status();
+          return false;
+        }
+        Serial.println("Connected to Wifi!");
+        return true;
+      }
+    }
+  }
+  Serial.println("Did not find any known networks, connecting failed");
+  return false;
+}
+
+void Wifi_Manager::print_connection_status(){
   // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
   Serial.println(WiFi.SSID());
@@ -15,4 +58,30 @@ void Wifi_Manager::print_wifi_status(){
   Serial.print("signal strength (RSSI):");
   Serial.print(rssi);
   Serial.println(" dBm");
+}
+
+bool Wifi_Manager::set_new_saved_network(char* ssid, char* password){
+  if ((strlen(ssid) > M2M_MAX_SSID_LEN) | (strlen(password) > M2M_MAX_PSK_LEN)){
+    return false;
+  }
+  strcpy(possible_networks[n_saved_networks].ssid, ssid);
+  strcpy(possible_networks[n_saved_networks].password, password);
+  n_saved_networks++;
+  return true;
+}
+
+void Wifi_Manager::print_wifi_status(){
+  char status = WiFi.status();
+  if (status == WL_CONNECTED){
+    Serial.println("status connected");
+  }
+  if (status == WL_DISCONNECTED){
+    Serial.println("status disconnected");
+  }
+  if (status == WL_CONNECT_FAILED){
+    Serial.println("status connect fail");
+  }
+  if (status == WL_CONNECTION_LOST){
+    Serial.println("status connect lost");
+  }
 }

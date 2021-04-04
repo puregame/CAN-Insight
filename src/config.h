@@ -33,3 +33,4 @@
 #define WIFI_EN_PIN 32
 
 #define MAX_SAVED_NETWORK_COUNT 5
+#define MAX_SERVER_LEN 60
