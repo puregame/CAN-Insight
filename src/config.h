@@ -31,3 +31,5 @@
 #define WIFI_IRQ_PIN 14
 #define WIFI_RESET_PIN 9
 #define WIFI_EN_PIN 32
+
+#define MAX_SAVED_NETWORK_COUNT 5

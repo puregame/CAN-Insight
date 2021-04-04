@@ -54,6 +54,7 @@ void setup_from_sd_card(){
     Serial.println("Card failed, or not present");
     return;
   }
+  // return; // do not do other setup, don't log to sd card
   read_time_file();
 
   if (!config.read_config_file()) Serial.println("Config File read error!");
@@ -145,6 +146,13 @@ void setup() {
   setup_from_sd_card();
 
   // WIFI stuff below
+  pinMode(WIFI_RESET_PIN, OUTPUT);
+  digitalWriteFast(WIFI_RESET_PIN, HIGH);
+  pinMode(WIFI_EN_PIN, OUTPUT);
+  digitalWriteFast(WIFI_EN_PIN, LOW);
+  delay(100); // attempt to reset wifi chip
+  SPI.setClockDivider(8);
+
   Serial.println("Starting Wifi");
   WiFi.setPins(WIFI_CS_PIN, WIFI_IRQ_PIN, WIFI_RESET_PIN, WIFI_EN_PIN);
 
@@ -180,66 +188,53 @@ void loop ()
       setup_from_sd_card();
     }
   }
-
-  // http_client.post("/", "text/plain", "this is a body");// read the status code and body of the response
-  // int statusCode = http_client.responseStatusCode();
-  // String response = http_client.responseBody();
   String request_uri = "/data_file/?unit_type=";
   request_uri = request_uri+"test"+"&unit_number=" + "test" + "&log_time=" + "2021-03-06T12-46-01-466Z";
+  
   http_client.beginRequest();
   http_client.get(request_uri);
   http_client.endRequest();
+  int status_code = http_client.responseStatusCode();
   
-  if (http_client.responseStatusCode() == 404) {
+  if (status_code == 404) {
     Serial.println("Got 404 status code, will upload file");
-    Serial.println("Connecting to server...");
       if (wifi.connect(server, port)) {
-        Serial.println("- connected");
-    #define LOG_NAME "CAN_008.LOG"
+        Serial.println("- connected to server");
+    #define LOG_NAME "CAN_001.LOG"
         wifi.print("POST /data_file/?log_name=");
         wifi.print(LOG_NAME);
         wifi.println(" HTTP/1.1");
-        wifi.println("Host: 192.168.1.173");
         wifi.println("User-Agent: Arduino/1.0");
-        wifi.println("Connection: close");
     //    wifi.println("Content-Type: application/x-www-form-urlencoded");
-        wifi.println("Content-Type: text/plain; charset=UTF-8");
+        wifi.println("Content-Type: text/plain");
         wifi.print("Content-Length: ");
         
-        Serial.println("reading Config file");
+        Serial.println("reading data file");
         File send_file = SD.open(LOG_NAME, FILE_READ);
         wifi.println(send_file.size());
         wifi.println();
-        for (int i = 0; i < send_file.size(); i++){
-          wifi.write(send_file.read());
-        }
-        Serial.println("- done");
+        // for (int i = 0; i < send_file.size(); i++){
+        //   wifi.write(send_file.read());
+        // }
+        #define FILE_BUF_LEN 1300
+        char buf[FILE_BUF_LEN] = "";
+        unsigned int i = 0;
+        while (i < send_file.size()){
+          buf[0] = '\0'; // clear the buffer before reading more data
+          send_file.read(buf, FILE_BUF_LEN-2);
+          wifi.write(buf, FILE_BUF_LEN-2);
+          i += FILE_BUF_LEN-2;
       }
+        }
+
+        
 
   }
   else
     Serial.println("Got not 404 status code, will not upload file");
     
-  Serial.println("Wait 1 seconds");
-  delay(1000);
+  Serial.println("Wait 10 seconds");
+  delay(10000);
 
   check_serial_time();
-}
-
-
-void printWiFiStatus() {
-  // print the SSID of the network you're attached to:
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
-
-  // print your WiFi shield's IP address:
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
-
-  // print the received signal strength:
-  long rssi = WiFi.RSSI();
-  Serial.print("signal strength (RSSI):");
-  Serial.print(rssi);
-  Serial.println(" dBm");
 }
