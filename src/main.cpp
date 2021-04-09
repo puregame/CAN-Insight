@@ -7,6 +7,8 @@
 #include "time_manager.h"
 #include "config_manager.h"
 #include "can_log.h"
+#include "wifi_manager.h"
+#include "data_uploader.h"
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; //orig RX_SIZE_256 TX_SIZE_64
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2; //orig RX_SIZE_256 TX_SIZE_64
@@ -16,6 +18,13 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 Config_Manager config;
 SD_CAN_Logger sd_logger(&config);
 System_Status status;
+
+// wifi objects
+
+char server[] = "192.168.1.173";
+int port = 5000; // to do: make this dynamic
+Wifi_Manager wifi_manager = Wifi_Manager();
+DataUploader data_uploader = DataUploader(wifi_manager.get_client(), server, port);
 
 // ******* Setup timers
 #include "TeensyTimerTool.h"
@@ -54,13 +63,19 @@ void setup_from_sd_card(){
     Serial.println("Card failed, or not present");
     return;
   }
-  // return; // do not do other setup, don't log to sd card
   read_time_file();
 
   if (!config.read_config_file()) Serial.println("Config File read error!");
   config.serial_print_bus_config_str(0);
   config.serial_print_bus_config_str(1);
   config.serial_print_bus_config_str(2);
+
+  // TODO: set wifi config in wifi manager to configs from config manager
+  for (int i = 0; i < MAX_SAVED_NETWORK_COUNT; i++){
+    wifi_manager.set_new_saved_network(config.wifi_nets[i]);
+  }
+  // testing: print all wifi networks
+  wifi_manager.print_saved_networks();
 
   sd_logger.max_log_size = config.max_log_size;
 
@@ -104,14 +119,7 @@ void setup_from_sd_card(){
   set_led_from_status(status);
 }
 
-//** wifi stuff
 
-char server[] = "192.168.1.173";
-int port = 5000;
-#include "wifi_manager.h"
-#include "data_uploader.h"
-Wifi_Manager wifi_manager = Wifi_Manager();
-DataUploader data_uploader = DataUploader(wifi_manager.get_client(), server, port);
 
 void setup() {
   delay(100);

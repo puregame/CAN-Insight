@@ -104,3 +104,9 @@ See the [CAN Insight Log Processor](https://github.com/puregame/CANInsight-proce
 
 ## Hardware
 None
+
+# Wifi
+Putting general notes here for now, will clean up later.
+1. No WEP supported in this project. 
+2. If "wifi" tag is in config (it must have a pass?) if the password is an empty string the system will attempt to connect assuming the network is unencrypted.
+3. Only connects to WPA or unencrypted wifi.

@@ -67,19 +67,31 @@ int Config_Manager::read_config_file() {
   else 
     set_default_can_config(0);
 
-  if (config_root.containsKey("can2")){
+  if (config_root.containsKey("can2")){ // process CAN2
     temp_object = config_root["can2"];
     set_can_config_from_jsonobject(temp_object, 1);
   }
   else
     set_default_can_config(1);
 
-  if (config_root.containsKey("can3")){
+  if (config_root.containsKey("can3")){ // process CAN3
     temp_object = config_root["can3"];
     set_can_config_from_jsonobject(temp_object, 2);
   }
   else
     set_default_can_config(2);
+
+  if (config_root.containsKey("wifi")){ // process wifi
+    JsonArray temp_array = config_root["wifi"].as<JsonArray>();
+    // loop through the wifi configs and add them to the wifi config array
+    for (JsonArray::iterator it=temp_array.begin(); it!=temp_array.end(); ++it) {
+      temp_object = it->as<JsonObject>();
+      Serial.print("Wifi, ssid: ");
+      Serial.print(temp_object["ssid"].as<char*>());
+      Serial.print(" password: ");
+      Serial.println(temp_object["password"].as<char*>());
+    }
+  }
   return 1;
 }
 
