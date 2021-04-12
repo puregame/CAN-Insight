@@ -48,8 +48,6 @@ bool Wifi_Manager::search_and_connect(){
   // Find the highest value in the RSSI array, attempt to connect to that one
   // if it does not work then try to connect to the second highest and so on
 
-
-
   Serial.println("Did not find any known networks, connecting failed");
   return false;
 }

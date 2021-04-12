@@ -2,14 +2,34 @@
 // #include <ArduinoHttpClient.h>
 #include "config.h"
 #include "data_uploader.h"
+#include "helpers.h"
 #include <SD.h>
+#include <EEPROM.h>
 
 DataUploader::DataUploader(Client& in_internet_client, char* in_server, int in_port):
     http_client(in_internet_client, in_server, in_port){ //, internet_client(&in_internet_client){
     internet_client = &in_internet_client;
     strcpy(server, in_server);
     port = in_port;
+    get_logs_uploaded();
 };
+
+void DataUploader::get_logs_uploaded(){
+  // read EEPROM for latest file
+  int file_to_try;
+  EEPROM.get(EEPROM_LOGs_UPLOADED_LOCATION, file_to_try);
+  char file_name[LOG_FILE_NAME_LENGTH] = "CAN_000.log";
+  sprintf_num_to_logfile_name(file_to_try, file_name);
+
+  // check if that CAN file actually exists
+  if (SD.exists(file_name))
+    next_log_to_upload = file_to_try+1;
+  else
+    next_log_to_upload = 0;
+  // if it does exist than it is the latest one that got uploaded
+  // if not then reset logs_uploaded to 0
+
+}
 
 void DataUploader::upload_data(){
 
@@ -46,9 +66,9 @@ void DataUploader::upload_data(){
           unsigned int i = 0;
           while (i < send_file.size()){
             buf[0] = '\0'; // clear the buffer before reading more data
-            send_file.read(buf, FILE_BUF_LEN-2);
-            internet_client->write(buf, FILE_BUF_LEN-2);
-            i += FILE_BUF_LEN-2;
+            send_file.read(buf, FILE_BUF_LEN);
+            internet_client->write(buf, FILE_BUF_LEN);
+            i += FILE_BUF_LEN;
         }
       }
     }

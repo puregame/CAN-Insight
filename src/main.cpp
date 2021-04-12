@@ -20,11 +20,7 @@ SD_CAN_Logger sd_logger(&config);
 System_Status status;
 
 // wifi objects
-
-char server[] = "192.168.1.173";
-int port = 5000; // to do: make this dynamic
 Wifi_Manager wifi_manager = Wifi_Manager();
-DataUploader data_uploader = DataUploader(wifi_manager.get_client(), server, port);
 
 // ******* Setup timers
 #include "TeensyTimerTool.h"
@@ -119,8 +115,6 @@ void setup_from_sd_card(){
   set_led_from_status(status);
 }
 
-
-
 void setup() {
   delay(100);
   setup_led();
@@ -150,14 +144,17 @@ void setup() {
   // WIFI stuff below
   Serial.println("Starting Wifi");
   wifi_manager.set_new_saved_network("Linksys Matt", "7056700081");
-  wifi_manager.search_and_connect();
+  if (config.wifi_enabled){
+    wifi_manager.search_and_connect();
+    DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port);
 
-  // test connecting to a server
-  WiFiClient client = wifi_manager.get_client();
-  if (wifi_manager.get_status() == WL_CONNECTED){
-    Serial.println("Connected to network, trying upload data");
-    data_uploader.upload_data();
-    Serial.println("uploaded data");
+    // test connecting to a server
+    WiFiClient client = wifi_manager.get_client();
+    if (wifi_manager.get_status() == WL_CONNECTED){
+      Serial.println("Connected to network, trying upload data");
+      data_uploader.upload_data();
+      Serial.println("uploaded data");
+    }
   }
 
 }

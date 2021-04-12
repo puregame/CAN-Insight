@@ -6,7 +6,9 @@
 #include "time_manager.h"
 #include "can_log.h"
 #include "config_manager.h"
+#include "helpers.h"
 #include <EEPROM.h>
+
 
 File SD_CAN_Logger::data_file;
 
@@ -76,16 +78,6 @@ void SD_CAN_Logger::can_frame_to_str(const CAN_message_t &msg, char* sTmp){
     sprintf(sTmp+strlen(sTmp), ",%0.2X", msg.buf[i]);
   }
   strcat(sTmp, "\r\n");
-}
-
-void sprintf_num_to_logfile_name(int number_to_try, char* log_name){
-  if (number_to_try > 999) {
-    sprintf(&log_name[LOG_FILE_NUM_POS-1], "%04d", number_to_try);  
-  }
-  else{
-    sprintf(&log_name[LOG_FILE_NUM_POS], "%03d", number_to_try);
-  }
-  log_name[LOG_FILE_DOT_POS] = '.';
 }
 
 void SD_CAN_Logger::set_next_log_filename(){

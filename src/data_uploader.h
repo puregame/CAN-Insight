@@ -12,6 +12,8 @@ class DataUploader{
     DataUploader(Client& in_internet_client,  char* server, int port);
     void upload_data();
   private:
+    void get_logs_uploaded();
+    int next_log_to_upload;
     HttpClient http_client;
     Client* internet_client;
     char server[MAX_SERVER_LEN];

@@ -1,5 +1,5 @@
 // general debug flag
-// #define DEBUG
+#define DEBUG
     // slows down startup to allow serial to open
     // prints on usb serial every can message received
 
@@ -19,6 +19,7 @@
 #define CONFIG_FILE_NAME "config.txt"
 // #define CONFIG_FILE_NAME "config.json"
 #define UNIT_INFO_MAX_LEN 11
+#define CONFIG_FILE_JSON_SIZE_BYTES 2000
 
 #define HEADER_CSV "timestamp,CAN_BUS,CAN_EXT,CAN_ID,CAN_LEN,Data0,Data1,Data2,Data3,Data4,Data5,Data6,Data7"
 
@@ -36,3 +37,10 @@
 #define MAX_SERVER_LEN 60
 
 #define DEFAULT_NO_NETWORK_RSSI_VALUE 99.99
+
+#define SERVER_MAX_LEN 30
+
+
+
+// EEPROM setups
+#define EEPROM_LOGs_UPLOADED_LOCATION 10
