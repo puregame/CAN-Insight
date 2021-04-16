@@ -7,6 +7,7 @@
 #define TIME_FILE_NAME "NOW.TXT"
 #define DEFAULT_TIME 1610331025 // Jan 10 2021 
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
+#define TIME_STRING_MAX_LEN 29
 
 /// ******  log file parameters *****
 #define LOG_FILE_NAME_LENGTH 12
@@ -19,7 +20,7 @@
 #define CONFIG_FILE_NAME "config.txt"
 // #define CONFIG_FILE_NAME "config.json"
 #define UNIT_INFO_MAX_LEN 11
-#define CONFIG_FILE_JSON_SIZE_BYTES 2000
+#define CONFIG_FILE_JSON_SIZE_BYTES 3000
 
 #define HEADER_CSV "timestamp,CAN_BUS,CAN_EXT,CAN_ID,CAN_LEN,Data0,Data1,Data2,Data3,Data4,Data5,Data6,Data7"
 
@@ -39,8 +40,6 @@
 #define DEFAULT_NO_NETWORK_RSSI_VALUE 99.99
 
 #define SERVER_MAX_LEN 30
-
-
 
 // EEPROM setups
 #define EEPROM_LOGs_UPLOADED_LOCATION 10

@@ -146,8 +146,9 @@ void setup() {
   wifi_manager.set_new_saved_network("Linksys Matt", "7056700081");
   if (config.wifi_enabled){
     wifi_manager.search_and_connect();
-    DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port);
-
+    DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port, sd_logger.next_file_number-1);
+    Serial.print("next log to upload: ");
+    Serial.println(data_uploader.next_log_to_upload);
     // test connecting to a server
     WiFiClient client = wifi_manager.get_client();
     if (wifi_manager.get_status() == WL_CONNECTED){

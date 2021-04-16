@@ -43,7 +43,8 @@ int Config_Manager::read_config_file() {
   config_file.close();
   JsonObject config_root = config_doc.as<JsonObject>();
   if (error){
-    Serial.println(F("Failed to read file, using default configuration"));
+    Serial.println("Failed to read file, using default configuration");
+    Serial.println("\tThis is probably caused by config file being too large");
     set_default_can_config(0);
     set_default_can_config(1);
     set_default_can_config(2);

@@ -31,21 +31,24 @@ bool Wifi_Manager::search_and_connect(){
       if (strcmp(WiFi.SSID(i), possible_networks[j].ssid) == 0){
         // future: set RSSI in rssi array to the value of this network
 
-        Serial.print("Found known network, attmpt to connect with ssid ");
-        Serial.print(possible_networks[j].ssid);
+        Serial.print("Found known network, attmpt to connect with ssid: ");
+        Serial.println(possible_networks[j].ssid);
         WiFi.begin(possible_networks[j].ssid, possible_networks[j].password);
         if (WiFi.status() != WL_CONNECTED) {
           Serial.println("Connection failed");
           print_wifi_status();
           return false;
         }
-        Serial.println("Connected to Wifi!");
+        #ifdef DEBUG
+          Serial.println("Connected to Wifi!");
+          print_connection_status();
+        #endif
         return true;
       }
     }
   }
 
-  // Find the highest value in the RSSI array, attempt to connect to that one
+  // future: Find the highest value in the RSSI array, attempt to connect to that one
   // if it does not work then try to connect to the second highest and so on
 
   Serial.println("Did not find any known networks, connecting failed");

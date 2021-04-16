@@ -82,40 +82,40 @@ void SD_CAN_Logger::can_frame_to_str(const CAN_message_t &msg, char* sTmp){
 
 void SD_CAN_Logger::set_next_log_filename(){
   // first test existing file, on boot this will try file number 0
-  sprintf_num_to_logfile_name(file_number_to_try, log_file_name);
+  sprintf_num_to_logfile_name(next_file_number, log_file_name);
   if (!SD.exists(log_file_name)){
-      EEPROM.put(0, file_number_to_try+1);
+      EEPROM.put(0, next_file_number+1);
       #ifdef DEBUG
         Serial.print("Saving file num to EEPROM: ");
-        Serial.println(file_number_to_try+1);
+        Serial.println(next_file_number+1);
       #endif
       return;
     }
-  EEPROM.get(0, file_number_to_try);
-  if (file_number_to_try > 9999){
-    file_number_to_try = 0;
+  EEPROM.get(0, next_file_number);
+  if (next_file_number > 9999){
+    next_file_number = 0;
   }
   #ifdef DEBUG
     Serial.print("Trying file from eeprom: ");
-    Serial.println(file_number_to_try);
+    Serial.println(next_file_number);
   #endif
-  sprintf_num_to_logfile_name(file_number_to_try, log_file_name);
+  sprintf_num_to_logfile_name(next_file_number, log_file_name);
 
   bool next_file_found = false;
   while (!next_file_found){
     if (!SD.exists(log_file_name)){
-      EEPROM.put(0, file_number_to_try+1);
+      EEPROM.put(0, next_file_number+1);
       #ifdef DEBUG
         Serial.print("Saving file num to EEPROM: ");
-        Serial.println(file_number_to_try+1);
+        Serial.println(next_file_number+1);
       #endif
       return;
     }
-    file_number_to_try ++;
-    if (file_number_to_try > 9999){
-      file_number_to_try = 0;
+    next_file_number ++;
+    if (next_file_number > 9999){
+      next_file_number = 0;
     }
-    sprintf_num_to_logfile_name(file_number_to_try, log_file_name);
+    sprintf_num_to_logfile_name(next_file_number, log_file_name);
   }
 }
 
