@@ -25,7 +25,6 @@ void DataUploader::get_logs_uploaded(){
   // IF the file does not exist, or we are are starting at log zero then reset logs to upload to zero
   if (!SD.exists(file_name) | max_log_to_upload < 0)
     set_next_log_to_upload_to_zero();
-  // if not then reset logs_uploaded to 0 to restart
 }
 
 void DataUploader::set_next_log_to_upload_to_zero(){
@@ -48,6 +47,10 @@ bool DataUploader::increment_next_log_to_upload(){
 }
 
 void DataUploader::upload_data(){
+
+  // *********************** WHY IS THIS UPLOADING THE SAME FILE THAT IT ALREADY DID LAST RUN *********************
+
+
   // assume in_internet_client is already connected to a network
   #ifdef DEBUG
     Serial.print("Starting upload_data with next file: ");
@@ -72,6 +75,7 @@ void DataUploader::upload_data(){
       Serial.println(file_name);
     #endif
     set_next_log_to_upload_to_zero();
+    return;
   }
   else {
     #ifdef DEBUG
@@ -176,7 +180,7 @@ bool DataUploader::upload_file(char* file_name){
     }
     else if (status_code == HTTP_ERROR_TIMED_OUT){
       #ifdef DEBUG
-        Serial.println("Could not connect to error, timeout");
+        Serial.println("Could not connect to server, timeout");
       #endif
       return false;
     }

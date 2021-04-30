@@ -66,12 +66,13 @@ void setup_from_sd_card(){
   config.serial_print_bus_config_str(1);
   config.serial_print_bus_config_str(2);
 
-  // TODO: set wifi config in wifi manager to configs from config manager
   for (int i = 0; i < MAX_SAVED_NETWORK_COUNT; i++){
     wifi_manager.set_new_saved_network(config.wifi_nets[i]);
   }
-  // testing: print all wifi networks
-  wifi_manager.print_saved_networks();
+  // testing: print all wifi 
+  #ifdef DEBUG
+    wifi_manager.print_saved_networks();
+  #endif
 
   sd_logger.max_log_size = config.max_log_size;
 
@@ -141,9 +142,8 @@ void setup() {
 
   setup_from_sd_card();
 
-  // WIFI stuff below
+  // Data Upload
   Serial.println("Starting Wifi");
-  wifi_manager.set_new_saved_network("Linksys Matt", "7056700081");
   if (config.wifi_enabled){
     wifi_manager.search_and_connect();
     DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port, sd_logger.next_file_number-1);
