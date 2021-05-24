@@ -6,7 +6,6 @@ Wifi_Manager::Wifi_Manager(){
   for (int i = 0; i < MAX_SAVED_NETWORK_COUNT; i++){
     wifi_rssi[i] = DEFAULT_NO_NETWORK_RSSI_VALUE;
   }
-//   SPI.setClockDivider(8); // may need this to slow down the transmission rate?
 }
 
 int Wifi_Manager::get_status(){

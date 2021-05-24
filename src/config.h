@@ -34,6 +34,8 @@
 #define WIFI_RESET_PIN 9
 #define WIFI_EN_PIN 32
 
+#define CONF_WINC_DEBUG 1
+
 #define MAX_SAVED_NETWORK_COUNT 5
 #define MAX_SERVER_LEN 60
 

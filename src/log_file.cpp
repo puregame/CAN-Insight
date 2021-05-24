@@ -2,6 +2,7 @@
 #include "datatypes.h"
 #include "log_file.h"
 #include <SD.h>
+// #include <SdFat.h>
 #include <ArduinoJson.h>
 
 LogFileMeta::LogFileMeta(char* file_name){

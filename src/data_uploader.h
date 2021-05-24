@@ -13,6 +13,7 @@ class DataUploader{
     DataUploader(Client& in_internet_client,  char* server, int port, int _max_log_to_upload);
     void upload_data();
     bool upload_file(char* file_name);
+    void test_get_route(char* route_url);
     int next_log_to_upload;
   private:
     void get_logs_uploaded();

@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include <FlexCAN_T4.h>
 #include <SD.h>
+// #include <SdFat.h>
 #include "config.h"
 #include "datatypes.h"
 #include "rgb_led.h"
@@ -147,6 +148,10 @@ void setup() {
   if (config.wifi_enabled){
     wifi_manager.search_and_connect();
     DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port, sd_logger.next_file_number-1);
+    #ifdef DEBUG
+      data_uploader.test_get_route("/");
+    #endif
+    
     Serial.print("next log to upload: ");
     Serial.println(data_uploader.next_log_to_upload);
     // test connecting to a server

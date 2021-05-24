@@ -5,6 +5,7 @@
 #include "helpers.h"
 #include "log_file.h"
 #include <SD.h>
+// #include <SdFat.h>
 #include <EEPROM.h>
 
 DataUploader::DataUploader(Client& in_internet_client, char* in_server, int in_port, int _max_log_to_upload):
@@ -46,13 +47,23 @@ bool DataUploader::increment_next_log_to_upload(){
   return true;
 }
 
+void DataUploader::test_get_route(char* route_url){
+  Serial.print("performing test get on url: ");
+  Serial.println(route_url);
+  http_client.beginRequest();
+  http_client.get(route_url);
+  http_client.endRequest();
+  Serial.print("Got status code: ");
+  Serial.println(http_client.responseStatusCode());
+  Serial.print("HTTP response: ");
+  Serial.println(http_client.responseBody());
+}
+
 void DataUploader::upload_data(){
-
   // *********************** WHY IS THIS UPLOADING THE SAME FILE THAT IT ALREADY DID LAST RUN *********************
-
-
   // assume in_internet_client is already connected to a network
   #ifdef DEBUG
+    next_log_to_upload=0; // set next log to upload to zero, upload all logs every time for debug
     Serial.print("Starting upload_data with next file: ");
     Serial.println(next_log_to_upload);
     Serial.print("Will not upload logs above: ");
@@ -109,7 +120,6 @@ void DataUploader::upload_data(){
 }
 
 bool DataUploader::upload_file(char* file_name){
-
   // open file, get metadata (unit type, unit number, log time)
   LogFileMeta log_meta = LogFileMeta(file_name);
 
@@ -153,18 +163,15 @@ bool DataUploader::upload_file(char* file_name){
           internet_client->println(send_file.size());
           internet_client->println();
           #define FILE_BUF_LEN 1300
-          char buf[FILE_BUF_LEN] = "";
+          char buf[FILE_BUF_LEN] = "1238810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102938210983021123890981092830181029382109830211238909810928301810293821098302112389098109283018102";
           unsigned int i = 0;
           Serial.print("Sending data:");
           while (i < send_file.size()){
-            buf[0] = '\0'; // clear the buffer before reading more data
-            send_file.read(buf, FILE_BUF_LEN);
+            // buf[0] = '\0'; // clear the buffer before reading more data
+            // send_file.read(buf, FILE_BUF_LEN);
+
             internet_client->write(buf, FILE_BUF_LEN);
             i += FILE_BUF_LEN;
-            #ifdef DEBUG
-            if (i % 10)
-              Serial.print(".");
-            #endif
         }
         return true;
         #ifdef DEBUG

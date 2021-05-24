@@ -9,7 +9,7 @@
 class Wifi_Manager{
   public:
     Wifi_Manager();
-    void check_wifi_netowrks(Wifi_Network* networks);
+    void check_wifi_networks(Wifi_Network* networks);
     bool is_connected();
     int get_status();
     WiFiClient& get_client();
