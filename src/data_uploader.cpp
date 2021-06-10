@@ -162,7 +162,7 @@ bool DataUploader::upload_file(char* file_name){
           File send_file = SD.open(file_name, FILE_READ);
           internet_client->println(send_file.size());
           internet_client->println();
-          #define FILE_BUF_LEN 1250
+          #define FILE_BUF_LEN 1300
           char buf[FILE_BUF_LEN] = "";
           unsigned int i = 0;
           Serial.print("Sending data:");
