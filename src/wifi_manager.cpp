@@ -16,6 +16,19 @@ WiFiClient& Wifi_Manager::get_client(){
   return &wifi_client;
 }
 
+void Wifi_Manager::ping_server(char* server_address){
+  int pingResult = WiFi.ping(server_address, 1000);
+
+  if (pingResult >= 0) {
+    Serial.print("SUCCESS! RTT = ");
+    Serial.print(pingResult);
+    Serial.println(" ms");
+  } else {
+    Serial.print("FAILED! Error code: ");
+    Serial.println(pingResult);
+  }
+}
+
 bool Wifi_Manager::search_and_connect(){
   // check if shield is present
   if (WiFi.status() == WL_NO_SHIELD) {
@@ -72,7 +85,7 @@ void Wifi_Manager::print_connection_status(){
 }
 
 bool Wifi_Manager::set_new_saved_network(char* ssid, char* password){
-  if ((strlen(ssid) > M2M_MAX_SSID_LEN) | (strlen(password) > M2M_MAX_PSK_LEN | n_saved_networks == MAX_SAVED_NETWORK_COUNT)){
+  if ((strlen(ssid) > M2M_MAX_SSID_LEN) | ((strlen(password) > M2M_MAX_PSK_LEN) | (n_saved_networks == MAX_SAVED_NETWORK_COUNT))){
     return false;
   }
   strcpy(possible_networks[n_saved_networks].ssid, ssid);

@@ -14,6 +14,7 @@ class Wifi_Manager{
     int get_status();
     WiFiClient& get_client();
     void print_wifi_status();
+    void ping_server(char* server_address);
     void print_connection_status();
     bool search_and_connect();
     bool set_new_saved_network(char* ssid, char* pass);

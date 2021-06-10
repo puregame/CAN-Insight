@@ -11,6 +11,7 @@
 #include "wifi_manager.h"
 #include "data_uploader.h"
 
+
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; //orig RX_SIZE_256 TX_SIZE_64
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2; //orig RX_SIZE_256 TX_SIZE_64
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
@@ -146,9 +147,15 @@ void setup() {
   // Data Upload
   Serial.println("Starting Wifi");
   if (config.wifi_enabled){
+    #ifdef DEBUG
+      Serial.println("Searching and connecting to network");
+      delay(10);
+    #endif
     wifi_manager.search_and_connect();
     DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port, sd_logger.next_file_number-1);
     #ifdef DEBUG
+      Serial.println("testing get route");
+      delay(10);
       data_uploader.test_get_route("/");
     #endif
     
