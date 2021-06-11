@@ -38,12 +38,13 @@ void Config_Manager::set_default_can_config(uint8_t config_num){
 int Config_Manager::read_config_file() {
   Serial.println("reading Config file");
   File config_file = SD.open(CONFIG_FILE_NAME, FILE_READ);
-  StaticJsonDocument<512> config_doc;
+  StaticJsonDocument<CONFIG_FILE_JSON_SIZE_BYTES> config_doc;
   DeserializationError error = deserializeJson(config_doc, config_file);
   config_file.close();
   JsonObject config_root = config_doc.as<JsonObject>();
   if (error){
-    Serial.println(F("Failed to read file, using default configuration"));
+    Serial.println("Failed to read file, using default configuration");
+    Serial.println("\tThis is probably caused by config file being too large");
     set_default_can_config(0);
     set_default_can_config(1);
     set_default_can_config(2);
@@ -52,12 +53,24 @@ int Config_Manager::read_config_file() {
   JsonObject temp_object;
   if (config_root.containsKey("max_file_size")){
     max_log_size = config_root["max_file_size"];
+    #ifdef DEBUG
+      Serial.print("max log size: ");
+      Serial.print(max_log_size);
+    #endif
   }
   if (config_root.containsKey("unit_type")){
     strlcpy(unit_type, config_root["unit_type"] | "", UNIT_INFO_MAX_LEN);
+    #ifdef DEBUG
+      Serial.print("Unit type: ");
+      Serial.println(unit_type);
+    #endif
   }
   if (config_root.containsKey("unit_number")){
     strlcpy(unit_number, config_root["unit_number"] | "", UNIT_INFO_MAX_LEN);
+    #ifdef DEBUG
+      Serial.print("Unit number: ");
+      Serial.println(unit_number);
+    #endif
   }
 
   if (config_root.containsKey("can1")){ // if can1 key exists then process it, otherwise set it to default confi
@@ -67,20 +80,74 @@ int Config_Manager::read_config_file() {
   else 
     set_default_can_config(0);
 
-  if (config_root.containsKey("can2")){
+  if (config_root.containsKey("can2")){ // process CAN2
     temp_object = config_root["can2"];
     set_can_config_from_jsonobject(temp_object, 1);
   }
   else
     set_default_can_config(1);
 
-  if (config_root.containsKey("can3")){
+  if (config_root.containsKey("can3")){ // process CAN3
     temp_object = config_root["can3"];
     set_can_config_from_jsonobject(temp_object, 2);
   }
   else
     set_default_can_config(2);
+  
+  if (config_root.containsKey("wifi_enable")){
+    #ifdef DEBUG
+      Serial.println("got wifi enable in config file");
+      delay(100);
+    #endif
+    wifi_enabled = config_root["wifi_enable"] | false;
+    strlcpy(server, config_root["server"] | "", SERVER_MAX_LEN );
+    port = config_root["port"] | 80;
+    #ifdef DEBUG
+      Serial.print("Server: ");
+      Serial.println(server);
+      Serial.print("port: ");
+      Serial.println(port);
+    #endif
+  }
+
+  #ifdef DEBUG
+    delay(100);
+  #endif
+
+  if (config_root.containsKey("wifi_networks")){ // process wifi
+    #ifdef DEBUG
+      Serial.println("Got wifi networks key in config file");
+    #endif
+    JsonArray temp_array = config_root["wifi_networks"].as<JsonArray>();
+    // loop through the wifi configs and add them to the wifi config array
+    for (JsonArray::iterator it=temp_array.begin(); it!=temp_array.end(); ++it) {
+      temp_object = it->as<JsonObject>();
+      #ifdef DEBUG
+        Serial.print("Wifi in config -  ssid: ");
+        Serial.print(temp_object["ssid"] | "");
+        Serial.print(" password: ");
+        Serial.println(temp_object["password"] | "");
+        delay(100);
+      #endif
+      set_new_wifi_net(temp_object["ssid"] | "", temp_object["password"] | "");
+    }
+  }
   return 1;
+}
+
+void Config_Manager::set_new_wifi_net(char* ssid, char* password){
+  if (num_wifi_nets >= MAX_SAVED_NETWORK_COUNT){
+    #ifdef DEBUG
+      Serial.print("Warning, too many wifi networks, not saving: ");
+      Serial.println(ssid);
+      delay(100);
+    #endif
+  }
+  else {
+    strcpy(wifi_nets[num_wifi_nets].ssid, ssid);
+    strcpy(wifi_nets[num_wifi_nets].password, password);
+    num_wifi_nets ++;
+  }
 }
 
 void Config_Manager::set_can_config_from_jsonobject(JsonObject json_obj, uint8_t config_num){

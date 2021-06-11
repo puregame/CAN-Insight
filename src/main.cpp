@@ -1,12 +1,16 @@
 #include "Arduino.h"
 #include <FlexCAN_T4.h>
 #include <SD.h>
+// #include <SdFat.h>
 #include "config.h"
 #include "datatypes.h"
 #include "rgb_led.h"
 #include "time_manager.h"
 #include "config_manager.h"
 #include "can_log.h"
+#include "wifi_manager.h"
+#include "data_uploader.h"
+
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; //orig RX_SIZE_256 TX_SIZE_64
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2; //orig RX_SIZE_256 TX_SIZE_64
@@ -16,6 +20,9 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
 Config_Manager config;
 SD_CAN_Logger sd_logger(&config);
 System_Status status;
+
+// wifi objects
+Wifi_Manager wifi_manager = Wifi_Manager();
 
 // ******* Setup timers
 #include "TeensyTimerTool.h"
@@ -60,6 +67,14 @@ void setup_from_sd_card(){
   config.serial_print_bus_config_str(0);
   config.serial_print_bus_config_str(1);
   config.serial_print_bus_config_str(2);
+
+  for (int i = 0; i < MAX_SAVED_NETWORK_COUNT; i++){
+    wifi_manager.set_new_saved_network(config.wifi_nets[i]);
+  }
+  // testing: print all wifi 
+  #ifdef DEBUG
+    wifi_manager.print_saved_networks();
+  #endif
 
   sd_logger.max_log_size = config.max_log_size;
 
@@ -128,11 +143,39 @@ void setup() {
   serial_print_current_time();
 
   setup_from_sd_card();
+
+  // Data Upload
+  Serial.println("Starting Wifi");
+  if (config.wifi_enabled){
+    #ifdef DEBUG
+      Serial.println("Searching and connecting to network");
+      delay(10);
+    #endif
+    wifi_manager.search_and_connect();
+    DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port, sd_logger.next_file_number-1);
+    #ifdef DEBUG
+      Serial.println("testing get route");
+      delay(10);
+      data_uploader.test_get_route("/");
+    #endif
+    
+    Serial.print("next log to upload: ");
+    Serial.println(data_uploader.next_log_to_upload);
+    // test connecting to a server
+    WiFiClient client = wifi_manager.get_client();
+    if (wifi_manager.get_status() == WL_CONNECTED){
+      Serial.println("Connected to network, trying upload data");
+      data_uploader.upload_data();
+      Serial.println("uploaded data");
+    }
+  }
+
 }
 
 unsigned long target_time = 0L ;
 #define ONE_SECOND_PERIOD 1*1000
 #define TEN_SECOND_PERIOD 10*1000
+
 
 void loop ()
 {
@@ -143,6 +186,9 @@ void loop ()
       setup_from_sd_card();
     }
   }
+    
+  Serial.println("Wait 10 seconds");
+  delay(10000);
 
   check_serial_time();
 }

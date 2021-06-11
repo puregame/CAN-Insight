@@ -16,7 +16,7 @@ class SD_CAN_Logger {
         void can_frame_to_str(const CAN_message_t &msg, char* sTmp);
         void write_sd_line(char* line);
         static void flush_sd_file();
-
+        uint16_t next_file_number = 0;
     private:
         void set_time_since_log_start_in_buffer(char* sTmp);
         static File data_file;
@@ -24,6 +24,5 @@ class SD_CAN_Logger {
         char single_can_log_config_str[160];
         unsigned long log_start_millis;
         Config_Manager* config;
-        uint16_t file_number_to_try = 0;
         bool log_enabled = true;
 };
