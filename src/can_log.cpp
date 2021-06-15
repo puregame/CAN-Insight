@@ -138,7 +138,7 @@ void SD_CAN_Logger::get_log_filename(char* name){
 }
 
 void SD_CAN_Logger::print_end_log_line(){
-  data_file.println("---- EOF NEXT FILE TO FOLLOW ----");
+  data_file.println(EOF_CAN_LOGFILE);
 }
 
 void SD_CAN_Logger::write_sd_line(char* line){
