@@ -137,6 +137,10 @@ void SD_CAN_Logger::get_log_filename(char* name){
     strcpy(name, log_file_name);
 }
 
+void SD_CAN_Logger::print_end_log_line(){
+  data_file.println("---- EOF NEXT FILE TO FOLLOW ----");
+}
+
 void SD_CAN_Logger::write_sd_line(char* line){
   // open the file.
   // if the file is available, write to it:
@@ -146,6 +150,7 @@ void SD_CAN_Logger::write_sd_line(char* line){
     data_file.print(line);
 
     if (data_file.size() > max_log_size){
+      print_end_log_line();
       data_file.close();
       set_next_log_filename();
       start_log();

@@ -19,6 +19,7 @@ class SD_CAN_Logger {
         static void flush_sd_file();
         uint16_t next_file_number = 0;
     private:
+        void print_end_log_line();
         void set_time_since_log_start_in_buffer(char* sTmp);
         static File data_file;
         char log_file_name[LOG_FILE_NAME_LENGTH] = DEFAULT_LOG_FILE_NAME;
