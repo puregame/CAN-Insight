@@ -64,7 +64,7 @@ Open a powershell and run the following:
 - `[System.IO.Ports.SerialPort]::getportnames()` to list available COM ports
 - `$port= new-Object System.IO.Ports.SerialPort COM4` to create a new port object to connect to
 - `$port.open()` to open the port
-- `$port.WriteLine("T"+[int32](New-TimeSpan -Start (Get-Date "01/01/1970") -End (Get-Date)).TotalSeconds)` to write the current time to the device
+- `$port.WriteLine("T"+[int64](New-TimeSpan -Start (Get-Date "01/01/1970") -End (Get-Date).ToUniversalTime()).TotalSeconds)` to write the current time to the device
 - `$port.ReadLine()` to read a single line (do this multiple times to get down to the latest lines)
 
 ### Via SD Card File
