@@ -58,12 +58,15 @@ void setup_from_sd_card(){
   if (!SD.begin(chipSelect)) {
     status = no_sd;
     set_led_from_status(status);
-    Serial.println("Card failed, or not present");
+    #ifdef DEBUG
+      Serial.println("Card failed, or not present");
+    #endif
     return;
   }
   read_time_file();
 
   if (!config.read_config_file()) Serial.println("Config File read error!");
+
   config.serial_print_bus_config_str(0);
   config.serial_print_bus_config_str(1);
   config.serial_print_bus_config_str(2);
@@ -79,10 +82,12 @@ void setup_from_sd_card(){
   sd_logger.max_log_size = config.max_log_size;
 
   sd_logger.set_next_log_filename();
-  Serial.print("Logging on file:");
-  char log_name[20];
-  sd_logger.get_log_filename(log_name);
-  Serial.println(log_name);
+  #ifdef DEBUG
+    Serial.print("Logging on file:");
+    char log_name[20];
+    sd_logger.get_log_filename(log_name);
+    Serial.println(log_name);
+  #endif
   sd_logger.start_log();
   t2.beginPeriodic(sd_logger.flush_sd_file, 1'000'000); // flush sd file every second
 
@@ -122,7 +127,7 @@ void setup() {
   delay(100);
   setup_led();
   t1.beginPeriodic(blink_builtin_led, 100'000); // 100ms blink every 100ms
-  Serial.begin(115200); 
+  Serial.begin(115200);
   Serial.println("Starting Program");
   
   config.can_configs[0].port = 1;
@@ -145,31 +150,30 @@ void setup() {
   setup_from_sd_card();
 
   // Data Upload
-  Serial.println("Starting Wifi");
   if (config.wifi_enabled){
     #ifdef DEBUG
+      Serial.println("Starting Wifi");
       Serial.println("Searching and connecting to network");
       delay(10);
     #endif
     wifi_manager.search_and_connect();
     DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port, sd_logger.next_file_number-1);
+    
     #ifdef DEBUG
-      Serial.println("testing get route");
-      delay(10);
-      data_uploader.test_get_route("/");
+      Serial.print("next log to upload: ");
+      Serial.println(data_uploader.next_log_to_upload);
     #endif
     
-    Serial.print("next log to upload: ");
-    Serial.println(data_uploader.next_log_to_upload);
-    // test connecting to a server
-    WiFiClient client = wifi_manager.get_client();
     if (wifi_manager.get_status() == WL_CONNECTED){
-      Serial.println("Connected to network, trying upload data");
+      #ifdef DEBUG
+        Serial.println("Connected to network, trying upload new data");
+      #endif
       data_uploader.upload_data();
-      Serial.println("uploaded data");
+      #ifdef DEBUG
+        Serial.println("uploaded data");
+      #endif
     }
   }
-
 }
 
 unsigned long target_time = 0L ;
@@ -186,9 +190,7 @@ void loop ()
       setup_from_sd_card();
     }
   }
-    
-  Serial.println("Wait 10 seconds");
-  delay(10000);
+  delay(1000);
 
   check_serial_time();
 }

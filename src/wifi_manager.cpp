@@ -94,7 +94,6 @@ bool Wifi_Manager::set_new_saved_network(char* ssid, char* password){
   return true;
 }
 
-
 bool Wifi_Manager::set_new_saved_network(Wifi_Network network){
   if (n_saved_networks >= MAX_SAVED_NETWORK_COUNT){
     return false;
