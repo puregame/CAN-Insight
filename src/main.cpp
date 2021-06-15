@@ -192,5 +192,8 @@ void loop ()
   }
   delay(1000);
 
-  check_serial_time();
+  if (check_serial_time()){
+    // time was updated, restart logging
+    sd_logger.restart_logging();
+  }
 }

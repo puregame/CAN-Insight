@@ -49,13 +49,14 @@ unsigned long processSyncMessage() {
   return pctime;
 }
 
-void check_serial_time(){
+bool check_serial_time(){
   if (Serial.available()) {
     time_t t = processSyncMessage();
     if (t != 0) {
       Teensy3Clock.set(t); // set the RTC
       Serial.print("Set new serial time: ");
       serial_print_current_time();
+      return true
     }
   }
 }
