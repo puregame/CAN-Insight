@@ -17,7 +17,7 @@ WiFiClient& Wifi_Manager::get_client(){
 }
 
 void Wifi_Manager::ping_server(char* server_address){
-  int pingResult = WiFi.ping(server_address, 1000);
+  int pingResult = WiFi.ping(server_address);
 
   if (pingResult >= 0) {
     Serial.print("SUCCESS! RTT = ");

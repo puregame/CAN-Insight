@@ -1,9 +1,11 @@
 #include <TimeLib.h>
 #include <time.h>
 #include "Arduino.h"
-#include <SD.h>
-
+#include <SdFat.h>
 #include "config.h"
+
+extern SdFs sd;
+
 
 bool rtc_sync_complete(){
     return (timeStatus() == timeSet);
@@ -62,8 +64,8 @@ void check_serial_time(){
 
 void read_time_file() {
   Serial.println("Reading Time file");
-  if (SD.exists(TIME_FILE_NAME)){
-    File time_file = SD.open(TIME_FILE_NAME, FILE_READ);
+  if (sd.exists(TIME_FILE_NAME)){
+    FsFile time_file = sd.open(TIME_FILE_NAME, O_READ);
     time_file.seek(TIME_HEADER);
     unsigned long pctime = 0L;
     pctime = time_file.parseInt();
@@ -77,6 +79,6 @@ void read_time_file() {
       Serial.println("SD Card time too old, known bad time");
     }
     time_file.close();
-    SD.remove(TIME_FILE_NAME);
+    sd.remove(TIME_FILE_NAME);
   }
 }

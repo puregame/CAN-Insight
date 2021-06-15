@@ -1,5 +1,5 @@
 #include <FlexCAN_T4.h>
-#include <SD.h>
+#include <SdFat.h>
 #include "datatypes.h"
 #include "config.h"
 #include "rgb_led.h"
@@ -9,8 +9,9 @@
 #include "helpers.h"
 #include <EEPROM.h>
 
+extern SdFs sd;
 
-File SD_CAN_Logger::data_file;
+FsFile SD_CAN_Logger::data_file;
 
 SD_CAN_Logger::SD_CAN_Logger(Config_Manager* _config){
   config = _config;
@@ -30,7 +31,7 @@ void SD_CAN_Logger::set_time_since_log_start_in_buffer(char* sTmp){
 int SD_CAN_Logger::start_log(){
   log_enabled = false;
   data_file.close();
-  data_file = SD.open(log_file_name, FILE_WRITE);
+  data_file = sd.open(log_file_name, FILE_WRITE);
   // if the file is available, write to it:
   if (data_file) {
     // print header file in the log
@@ -83,7 +84,7 @@ void SD_CAN_Logger::can_frame_to_str(const CAN_message_t &msg, char* sTmp){
 void SD_CAN_Logger::set_next_log_filename(){
   // first test existing file, on boot this will try file number 0
   sprintf_num_to_logfile_name(next_file_number, log_file_name);
-  if (!SD.exists(log_file_name)){
+  if (!sd.exists(log_file_name)){
       EEPROM.put(0, next_file_number+1);
       #ifdef DEBUG
         Serial.print("Saving file num to EEPROM: ");
@@ -103,7 +104,7 @@ void SD_CAN_Logger::set_next_log_filename(){
 
   bool next_file_found = false;
   while (!next_file_found){
-    if (!SD.exists(log_file_name)){
+    if (!sd.exists(log_file_name)){
       EEPROM.put(0, next_file_number+1);
       #ifdef DEBUG
         Serial.print("Saving file num to EEPROM: ");
@@ -140,7 +141,7 @@ void SD_CAN_Logger::write_sd_line(char* line){
   else{
     // if the file isn't open, pop up an error:
     Serial.println("file not opened! opening and trying again");
-    data_file = SD.open(log_file_name, FILE_WRITE);
+    data_file = sd.open(log_file_name, FILE_WRITE);
     write_sd_line(line);
   }
 }

@@ -70,9 +70,13 @@ tstrNmBusCapabilities egstrNmBusCapabilities =
 	NM_BUS_MAX_TRX_SZ
 };
 
-static const SPISettings wifi_SPISettings(50000000L, MSBFIRST, SPI_MODE0);
-/* Setting any speed setting gives same speed of ~6 mbps for transferring random data and ~4mpbs when taking data from SD card
- Setting of 4000000 gave spikes between 2.4 and 4 Mbps
+static const SPISettings wifi_SPISettings(24000000L, MSBFIRST, SPI_MODE0);
+/* 
+
+ 48 -> ~7Mbps
+ 12 -> 6-7 Mbps
+ 8  -> 4.8-5.3 transfer stopped
+ 4  -> 2.7-3 Mbps consistent
 */
 
 static sint8 spi_rw(uint8* pu8Mosi, uint8* pu8Miso, uint16 u16Sz)

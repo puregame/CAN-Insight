@@ -79,7 +79,8 @@ class StreamFile : public stream_t, public BaseFile {
   void flush() {
     BaseFile::sync();
   }
-  /** This function reports if the current file is a directory or not.
+  /** This function re
+   * ports if the current file is a directory or not.
   * \return true if the file is a directory.
   */
   bool isDirectory() {

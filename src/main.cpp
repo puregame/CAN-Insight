@@ -1,7 +1,6 @@
 #include "Arduino.h"
 #include <FlexCAN_T4.h>
-#include <SD.h>
-// #include <SdFat.h>
+#include <SdFat.h>
 #include "config.h"
 #include "datatypes.h"
 #include "rgb_led.h"
@@ -32,7 +31,10 @@ using namespace TeensyTimerTool;
 Timer t1; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
 Timer t2; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
 
-const int chipSelect = BUILTIN_SDCARD;
+// setup SD Card
+SdFs sd;
+FsFile file;
+
 uint16_t log_number = 0;
 // ** begin functions
 
@@ -55,7 +57,7 @@ void can_callback(const CAN_message_t &msg) {
 }
 
 void setup_from_sd_card(){
-  if (!SD.begin(chipSelect)) {
+  if (!sd.begin(SdioConfig(FIFO_SDIO))) {
     status = no_sd;
     set_led_from_status(status);
     #ifdef DEBUG

@@ -2,7 +2,9 @@
 #include "config.h"
 #include "config_manager.h"
 #include <ArduinoJson.h>
-#include <SD.h>
+#include <SdFat.h>
+
+extern SdFs sd;
 
 void Config_Manager::bus_config_to_str(uint8_t config_num, char*sTmp){
   strcat(sTmp, "{\"bus_number\": ");
@@ -37,7 +39,7 @@ void Config_Manager::set_default_can_config(uint8_t config_num){
 
 int Config_Manager::read_config_file() {
   Serial.println("reading Config file");
-  File config_file = SD.open(CONFIG_FILE_NAME, FILE_READ);
+  FsFile config_file = sd.open(CONFIG_FILE_NAME, FILE_READ);
   StaticJsonDocument<CONFIG_FILE_JSON_SIZE_BYTES> config_doc;
   DeserializationError error = deserializeJson(config_doc, config_file);
   config_file.close();
