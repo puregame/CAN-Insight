@@ -15,6 +15,7 @@ class SD_CAN_Logger {
         void get_log_filename(char* name);
         void can_frame_to_str(const CAN_message_t &msg, char* sTmp);
         void write_sd_line(char* line);
+        void reopen_file();
         static void flush_sd_file();
         uint16_t next_file_number = 0;
     private:

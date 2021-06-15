@@ -191,6 +191,7 @@ bool DataUploader::upload_file(char* file_name){
             file_pos = send_file.position();
             send_file.close();
             if ((millis() - last_sd_write) > 2000){
+              sd_logger.reopen_file();
               sd_logger.flush_sd_file();
               last_sd_write = millis();
             }
@@ -204,6 +205,7 @@ bool DataUploader::upload_file(char* file_name){
         #ifdef DEBUG
           Serial.println("Sent entire file");
         #endif
+        sd_logger.reopen_file();
         t2.start();
         return true;
       }

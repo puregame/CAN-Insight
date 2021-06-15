@@ -24,6 +24,19 @@ void SD_CAN_Logger::flush_sd_file(){
   set_led_from_status(waiting_for_data);
 }
 
+void SD_CAN_Logger::reopen_file(){
+  #ifdef DEBUG
+    Serial.println("Reopening CAN log data file.");
+  #endif
+  uint64_t pos = data_file.position();
+  data_file.close();
+  data_file.open(log_file_name, FILE_WRITE);
+  data_file.seek(pos);
+  #ifdef DEBUG
+    Serial.println("Reopening CAN log data file.");
+  #endif
+}
+
 void SD_CAN_Logger::set_time_since_log_start_in_buffer(char* sTmp){
   sprintf(sTmp, "%3.3f", (millis()-log_start_millis)/1000.0);
 }
