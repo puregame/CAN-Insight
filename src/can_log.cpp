@@ -20,7 +20,7 @@ SD_CAN_Logger::SD_CAN_Logger(Config_Manager* _config){
 void SD_CAN_Logger::flush_sd_file(){
   set_led_from_status(writing_sd);
   data_file.flush();
-  delay(50);
+  delay(40);
   set_led_from_status(waiting_for_data);
 }
 

@@ -9,6 +9,7 @@
 #include "can_log.h"
 #include "wifi_manager.h"
 #include "data_uploader.h"
+#include "TeensyTimerTool.h"
 
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; //orig RX_SIZE_256 TX_SIZE_64
@@ -24,12 +25,10 @@ System_Status status;
 Wifi_Manager wifi_manager = Wifi_Manager();
 
 // ******* Setup timers
-#include "TeensyTimerTool.h"
-using namespace TeensyTimerTool;
 // This does not work when timelib.h is also included !
 //// timer for LED blinking
-Timer t1; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
-Timer t2; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
+TeensyTimerTool::Timer t1; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
+TeensyTimerTool::Timer t2; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
 
 // setup SD Card
 SdFs sd;

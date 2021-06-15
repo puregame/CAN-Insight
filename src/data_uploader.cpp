@@ -6,8 +6,12 @@
 #include "log_file.h"
 #include <SdFat.h>
 #include <EEPROM.h>
+#include "can_log.h"
 
 extern SdFs sd;
+#include "TeensyTimerTool.h"
+extern TeensyTimerTool::Timer t2;
+extern SD_CAN_Logger sd_logger;
 
 DataUploader::DataUploader(Client& in_internet_client, char* in_server, int in_port, int _max_log_to_upload):
     http_client(in_internet_client, in_server, in_port){ //, internet_client(&in_internet_client){
@@ -154,45 +158,53 @@ bool DataUploader::upload_file(char* file_name){
           
           Serial.println("reading data file");
           FsFile send_file = sd.open(file_name, O_READ);
-          char file_size[40];
-          sprintf(file_size, "%d", send_file.size());
+          uint64_t file_size = send_file.size();
+          char file_size_str[40];
+          sprintf(file_size_str, "%d", file_size);
 
           char request_header[1400] = "POST /data_file/?log_name=";
           strcat(request_header, file_name);
           strcat(request_header, " HTTP/1.1\nUser-Agent: Arduino/1.0\nContent-Type: text/plain\nContent-Length: ");
-          strcat(request_header, file_size);
+          strcat(request_header, file_size_str);
           strcat(request_header, "\n");
-
-
-      //     internet_client->print("POST /data_file/?log_name=");
-      //     internet_client->print(file_name);
-      //     internet_client->println(" HTTP/1.1");
-      //     internet_client->println("User-Agent: Arduino/1.0");
-      // //    internet_client->println("Content-Type: application/x-www-form-urlencoded");
-      //     internet_client->println("Content-Type: text/plain");
-      //     internet_client->print("Content-Length: ");
         
           internet_client->println(request_header);
-          #define TCP_PER_FILE_READ 1
+          #define TCP_PER_FILE_READ 200
           #define TCP_LEN 1200
           #define FILE_BUF_LEN TCP_LEN * TCP_PER_FILE_READ
           uint8_t buf[FILE_BUF_LEN] = "";
-          unsigned int i = 0;
+          uint64_t i = 0;
+          uint64_t file_pos = 0;
           Serial.print("Sending data:");
-          while (i < send_file.size()){
+          t2.stop();
+          uint32_t last_sd_write = millis();
+          while (i < file_size){
             if (!internet_client->connected()){
               Serial.println("Client not connected!");
+              t2.start();
+              return false;
             }
-            // delay(1);
+            send_file = sd.open(file_name, O_READ);
             buf[0] = '\0'; // clear the buffer before reading more data
+            send_file.seek(file_pos);
             send_file.read(buf, FILE_BUF_LEN);
-            // delay(1);
-            internet_client->write(buf, FILE_BUF_LEN);
-            i += FILE_BUF_LEN;
+            file_pos = send_file.position();
+            send_file.close();
+            if ((millis() - last_sd_write) > 2000){
+              sd_logger.flush_sd_file();
+              last_sd_write = millis();
+            }
+            uint64_t j = 0;
+            while (j < FILE_BUF_LEN){
+              internet_client->write(buf + j, TCP_LEN);
+              i += TCP_LEN;
+              j += TCP_LEN;
+            }
         }
         #ifdef DEBUG
           Serial.println("Sent entire file");
         #endif
+        t2.start();
         return true;
       }
     }
