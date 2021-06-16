@@ -11,10 +11,12 @@
 #include "wifi_manager.h"
 #include "data_uploader.h"
 
+using namespace std;
 
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; //orig RX_SIZE_256 TX_SIZE_64
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2; //orig RX_SIZE_256 TX_SIZE_64
-FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3; //orig RX_SIZE_256 TX_SIZE_64
+
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can3;
 
 // configuration variables
 Config_Manager config;
@@ -29,17 +31,12 @@ Wifi_Manager wifi_manager = Wifi_Manager();
 using namespace TeensyTimerTool;
 // This does not work when timelib.h is also included !
 //// timer for LED blinking
-Timer t1; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
-Timer t2; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
+PeriodicTimer can_log_timer(PIT);
+TeensyTimerTool::PeriodicTimer timer_NTP_check(TCK);
 
 const int chipSelect = BUILTIN_SDCARD;
 uint16_t log_number = 0;
 // ** begin functions
-
-void blink_builtin_led()
-{
-    digitalWriteFast(LED_BUILTIN, !digitalReadFast(LED_BUILTIN));    
-}
 
 void can_callback(const CAN_message_t &msg) {
   // filter by extended and standard
@@ -74,7 +71,6 @@ void setup_from_sd_card(){
   for (int i = 0; i < MAX_SAVED_NETWORK_COUNT; i++){
     wifi_manager.set_new_saved_network(config.wifi_nets[i]);
   }
-  // testing: print all wifi 
   #ifdef DEBUG
     wifi_manager.print_saved_networks();
   #endif
@@ -89,7 +85,7 @@ void setup_from_sd_card(){
     Serial.println(log_name);
   #endif
   sd_logger.start_log();
-  t2.beginPeriodic(sd_logger.flush_sd_file, 1'000'000); // flush sd file every second
+  can_log_timer.begin(sd_logger.flush_sd_file, 1s); // flush sd file every second
 
   // setup CANBus
   if (config.can_configs[0].log_enabled){
@@ -126,7 +122,7 @@ void setup_from_sd_card(){
 void setup() {
   delay(100);
   setup_led();
-  t1.beginPeriodic(blink_builtin_led, 100'000); // 100ms blink every 100ms
+  timer_NTP_check.begin(check_set_rtc_from_wifi, 10s);
   Serial.begin(115200);
   Serial.println("Starting Program");
   
@@ -190,7 +186,9 @@ void loop ()
       setup_from_sd_card();
     }
   }
-  delay(1000);
-
-  check_serial_time();
+  TeensyTimerTool::tick();
+  if (check_serial_time()){
+    // time was updated, restart logging
+    sd_logger.restart_logging();
+  }
 }
