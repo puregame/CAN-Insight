@@ -42,11 +42,10 @@ As soon as boot up is complete the device will begin logging CAN data. A feature
 To be implemented, this is supported by the device and software but needs to be thought out and implemented. See the roadmap section for more details.
 
 ## Status LEDs
-The CAN Insight device contains 3 status leds.
+The CAN Insight device contains 2 status leds.
 
 1. Green LED indicates power is on the unit.
-2. Orange LED on the daughter board flashes at 5hz to indicate program is running.
-3. RGB LED indicates program status.
+2. RGB LED indicates program status.
 
 #### RGB Status
 Orange: System is booting up.
