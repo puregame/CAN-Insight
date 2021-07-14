@@ -17,6 +17,9 @@
 #define DEFAULT_MAX_LOG_FILE_SIZE 1000000000 // 1 million bytes = 1 gigabyte
 #define EOF_CAN_LOGFILE "---- EOF NEXT FILE TO FOLLOW ----"
 #define HEADER_CSV "timestamp,CAN_BUS,CAN_EXT,CAN_ID,CAN_LEN,Data0,Data1,Data2,Data3,Data4,Data5,Data6,Data7"
+#define SD_WRITE_BUFFER_LEN 30000 // 30,000 chars in buffer, 
+                                   // buffer writes every half, 
+                                   // assuming max line length of 50 would take 1200 messages per second to overflow buffer during file upload
 
 /// ******  config file parameters *****
 #define CONFIG_FILE_NAME "config.txt"

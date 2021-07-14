@@ -18,7 +18,9 @@ class SD_CAN_Logger {
         void reopen_file();
         static void flush_sd_file();
         uint16_t next_file_number = 0;
+        bool no_write_file = false;
     private:
+        char write_buffer[SD_WRITE_BUFFER_LEN];
         void print_end_log_line();
         void set_time_since_log_start_in_buffer(char* sTmp);
         static File data_file;

@@ -10,7 +10,7 @@
 
 extern SdFs sd;
 #include "TeensyTimerTool.h"
-extern TeensyTimerTool::Timer t2;
+extern TeensyTimerTool::Timer flush_sd_timer;
 extern SD_CAN_Logger sd_logger;
 
 DataUploader::DataUploader(Client& in_internet_client, char* in_server, int in_port, int _max_log_to_upload):
@@ -157,6 +157,7 @@ bool DataUploader::upload_file(char* file_name){
           Serial.println("- connected to server");
           
           Serial.println("reading data file");
+          sd_logger.no_write_file = true;
           FsFile send_file = sd.open(file_name, O_READ);
           uint64_t file_size = send_file.size();
           char file_size_str[40];
@@ -176,12 +177,12 @@ bool DataUploader::upload_file(char* file_name){
           uint64_t i = 0;
           uint64_t file_pos = 0;
           Serial.print("Sending data:");
-          t2.stop();
+          flush_sd_timer.stop();
           uint32_t last_sd_write = millis();
           while (i < file_size){
             if (!internet_client->connected()){
               Serial.println("Client not connected!");
-              t2.start();
+              flush_sd_timer.start();
               return false;
             }
             send_file = sd.open(file_name, O_READ);
@@ -190,7 +191,8 @@ bool DataUploader::upload_file(char* file_name){
             send_file.read(buf, FILE_BUF_LEN);
             file_pos = send_file.position();
             send_file.close();
-            if ((millis() - last_sd_write) > 2000){
+            if ((millis() - last_sd_write) > 500){
+              // every second flush SD file
               sd_logger.reopen_file();
               sd_logger.flush_sd_file();
               last_sd_write = millis();
@@ -206,7 +208,8 @@ bool DataUploader::upload_file(char* file_name){
           Serial.println("Sent entire file");
         #endif
         sd_logger.reopen_file();
-        t2.start();
+        flush_sd_timer.start();
+        sd_logger.no_write_file = true;
         return true;
       }
     }

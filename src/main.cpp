@@ -28,7 +28,7 @@ Wifi_Manager wifi_manager = Wifi_Manager();
 // This does not work when timelib.h is also included !
 //// timer for LED blinking
 TeensyTimerTool::Timer t1; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
-TeensyTimerTool::Timer t2; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
+TeensyTimerTool::Timer flush_sd_timer; // generate a timer from the pool (Pool: 2xGPT, 16xTMR(QUAD), 20xTCK)
 
 // setup SD Card
 SdFs sd;
@@ -90,7 +90,7 @@ void setup_from_sd_card(){
     Serial.println(log_name);
   #endif
   sd_logger.start_log();
-  t2.beginPeriodic(sd_logger.flush_sd_file, 1'000'000); // flush sd file every second
+  flush_sd_timer.beginPeriodic(sd_logger.flush_sd_file, 1'000'000); // flush sd file every second
 
   // setup CANBus
   if (config.can_configs[0].log_enabled){

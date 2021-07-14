@@ -10,6 +10,7 @@
 #include <EEPROM.h>
 
 extern SdFs sd;
+extern SD_CAN_Logger sd_logger;
 
 FsFile SD_CAN_Logger::data_file;
 
@@ -18,6 +19,12 @@ SD_CAN_Logger::SD_CAN_Logger(Config_Manager* _config){
 }
 
 void SD_CAN_Logger::flush_sd_file(){
+  // check if write buffer is not empty, if it has content then write to the file then flush
+  if (strlen(sd_logger.write_buffer) > 0){
+    data_file.print(sd_logger.write_buffer);
+    sd_logger.write_buffer[0]='\0'; // clear the write buffer
+  }
+
   set_led_from_status(writing_sd);
   data_file.flush();
   delay(40);
@@ -32,9 +39,6 @@ void SD_CAN_Logger::reopen_file(){
   data_file.close();
   data_file.open(log_file_name, FILE_WRITE);
   data_file.seek(pos);
-  #ifdef DEBUG
-    Serial.println("Reopening CAN log data file.");
-  #endif
 }
 
 void SD_CAN_Logger::set_time_since_log_start_in_buffer(char* sTmp){
@@ -146,20 +150,33 @@ void SD_CAN_Logger::write_sd_line(char* line){
   // if the file is available, write to it:
   if (!log_enabled)
     return;
-  if (data_file) {
-    data_file.print(line);
-
-    if (data_file.size() > max_log_size){
-      print_end_log_line();
-      data_file.close();
-      set_next_log_filename();
-      start_log();
+  if (no_write_file){
+    if (strlen(write_buffer) + strlen(line) > SD_WRITE_BUFFER_LEN){
+      Serial.println("ERROR: sd file buffer overrun!");
+      return;
     }
+    strcat(write_buffer, line);
   }
   else{
-    // if the file isn't open, pop up an error:
-    Serial.println("file not opened! opening and trying again");
-    data_file = sd.open(log_file_name, FILE_WRITE);
-    write_sd_line(line);
+    if (data_file) {
+      if (strlen(write_buffer) > 0){
+        data_file.print(write_buffer);
+        write_buffer[0]='\0'; // clear the write buffer
+      }
+      data_file.print(line);
+
+      if (data_file.size() > max_log_size){
+        print_end_log_line();
+        data_file.close();
+        set_next_log_filename();
+        start_log();
+      }
+    }
+    else{
+      // if the file isn't open, pop up an error:
+      Serial.println("file not opened! opening and trying again");
+      data_file = sd.open(log_file_name, FILE_WRITE);
+      write_sd_line(line);
+    }
   }
 }
