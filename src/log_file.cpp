@@ -1,14 +1,15 @@
 #include "config.h"
 #include "datatypes.h"
 #include "log_file.h"
-#include <SD.h>
-// #include <SdFat.h>
+#include <SdFat.h>
 #include <ArduinoJson.h>
+
+extern SdFs sd;
 
 LogFileMeta::LogFileMeta(char* file_name){
   // open file, read first line
   char file_first_line[2000] = "";
-  File log_file = SD.open(file_name, FILE_READ);
+  File log_file = sd.open(file_name, FILE_READ);
   char cr[2] = "A";
   for(unsigned int i = 0; i < (2000 -1); i++){
     cr[0] = log_file.read();

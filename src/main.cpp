@@ -1,7 +1,6 @@
 #include "Arduino.h"
 #include <FlexCAN_T4.h>
-#include <SD.h>
-// #include <SdFat.h>
+#include <SdFat.h>
 #include "config.h"
 #include "datatypes.h"
 #include "rgb_led.h"
@@ -10,6 +9,7 @@
 #include "can_log.h"
 #include "wifi_manager.h"
 #include "data_uploader.h"
+#include "TeensyTimerTool.h"
 
 using namespace std;
 
@@ -27,14 +27,15 @@ System_Status status;
 Wifi_Manager wifi_manager = Wifi_Manager();
 
 // ******* Setup timers
-#include "TeensyTimerTool.h"
-using namespace TeensyTimerTool;
 // This does not work when timelib.h is also included !
 //// timer for LED blinking
 PeriodicTimer can_log_timer(PIT);
 TeensyTimerTool::PeriodicTimer timer_NTP_check(TCK);
 
-const int chipSelect = BUILTIN_SDCARD;
+// setup SD Card
+SdFs sd;
+FsFile file;
+
 uint16_t log_number = 0;
 // ** begin functions
 
@@ -52,7 +53,7 @@ void can_callback(const CAN_message_t &msg) {
 }
 
 void setup_from_sd_card(){
-  if (!SD.begin(chipSelect)) {
+  if (!sd.begin(SdioConfig(FIFO_SDIO))) {
     status = no_sd;
     set_led_from_status(status);
     #ifdef DEBUG

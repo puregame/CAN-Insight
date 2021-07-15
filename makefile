@@ -21,7 +21,7 @@ LIBS_SHARED_BASE := C:\Users\MATTHE~1\DOCUME~1\Arduino\LIBRAR~1
 LIBS_SHARED      := TeensyTimerTool FlexCAN_T4 
 
 LIBS_LOCAL_BASE  := lib
-LIBS_LOCAL       := ArduinoHttpClient ArduinoJson EEPROM SD SdFat SPI Time WiFi101 
+LIBS_LOCAL       := ArduinoHttpClient ArduinoJson EEPROM SdFat SPI Time WiFi101 
 
 CORE_BASE        := C:\PROGRA~2\Arduino\hardware\teensy\avr\cores\teensy4
 GCC_BASE         := C:\PROGRA~2\Arduino\hardware\tools\arm\bin

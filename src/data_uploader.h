@@ -21,7 +21,7 @@ class DataUploader{
     void set_next_log_to_upload_to_zero();
     HttpClient http_client;
     Client* internet_client;
-    char server[MAX_SERVER_LEN];
+    char server[MAX_SERVER_URL_LEN];
     int port;
     int max_log_to_upload;
 };
