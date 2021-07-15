@@ -17,6 +17,7 @@ class SD_CAN_Logger {
         void write_sd_line(char* line);
         void reopen_file();
         static void flush_sd_file();
+        void restart_logging();
         uint16_t next_file_number = 0;
         bool no_write_file = false;
     private:

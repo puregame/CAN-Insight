@@ -51,13 +51,14 @@ unsigned long processSyncMessage() {
   return pctime;
 }
 
-void check_serial_time(){
+bool check_serial_time(){
   if (Serial.available()) {
     time_t t = processSyncMessage();
     if (t != 0) {
       Teensy3Clock.set(t); // set the RTC
       Serial.print("Set new serial time: ");
       serial_print_current_time();
+      return true;
     }
   }
 }
@@ -81,4 +82,18 @@ void read_time_file() {
     time_file.close();
     sd.remove(TIME_FILE_NAME);
   }
+}
+
+bool check_set_rtc_from_wifi(){
+  uint32_t ntp_time = WiFi.getTime();
+  if (ntp_time > 0){
+    // NTP time set correctly, set this to RTC value
+    Teensy3Clock.set(ntp_time);
+    #ifdef DEBUG
+      Serial.print("Updated RTC to NTP server: ");
+      serial_print_current_time();
+    #endif
+    return true;
+  }
+  return false;
 }

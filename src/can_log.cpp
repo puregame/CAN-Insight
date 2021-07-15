@@ -145,6 +145,12 @@ void SD_CAN_Logger::print_end_log_line(){
   data_file.println(EOF_CAN_LOGFILE);
 }
 
+void SD_CAN_Logger::restart_logging(){
+  data_file.close();
+  set_next_log_filename();
+  start_log();
+}
+
 void SD_CAN_Logger::write_sd_line(char* line){
   // open the file.
   // if the file is available, write to it:
@@ -166,17 +172,15 @@ void SD_CAN_Logger::write_sd_line(char* line){
       data_file.print(line);
 
       if (data_file.size() > max_log_size){
-        print_end_log_line();
-        data_file.close();
-        set_next_log_filename();
-        start_log();
+        restart_logging();
       }
     }
     else{
       // if the file isn't open, pop up an error:
-      Serial.println("file not opened! opening and trying again");
-      data_file = sd.open(log_file_name, FILE_WRITE);
+      #ifdef DEBUG
+        Serial.println("file not opened! opening and trying again");
+      #endif
+      data_file = SD.open(log_file_name, FILE_WRITE);
       write_sd_line(line);
-    }
   }
 }
