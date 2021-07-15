@@ -2,6 +2,8 @@
 #include <time.h>
 #include "Arduino.h"
 #include <SdFat.h>
+#include <WiFi101.h>
+
 #include "config.h"
 
 extern SdFs sd;

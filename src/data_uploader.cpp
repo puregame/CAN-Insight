@@ -10,7 +10,7 @@
 
 extern SdFs sd;
 #include "TeensyTimerTool.h"
-extern TeensyTimerTool::Timer flush_sd_timer;
+extern TeensyTimerTool::PeriodicTimer can_log_timer;
 extern SD_CAN_Logger sd_logger;
 
 DataUploader::DataUploader(Client& in_internet_client, char* in_server, int in_port, int _max_log_to_upload):
@@ -29,7 +29,7 @@ void DataUploader::get_logs_uploaded(){
   sprintf_num_to_logfile_name(next_log_to_upload, file_name);
 
   // IF the file does not exist, or we are are starting at log zero then reset logs to upload to zero
-  if (!sd.exists(file_name) | max_log_to_upload < 0)
+  if (!sd.exists(file_name) | (max_log_to_upload < 0))
     set_next_log_to_upload_to_zero();
 }
 
@@ -177,12 +177,12 @@ bool DataUploader::upload_file(char* file_name){
           uint64_t i = 0;
           uint64_t file_pos = 0;
           Serial.print("Sending data:");
-          flush_sd_timer.stop();
+          can_log_timer.stop();
           uint32_t last_sd_write = millis();
           while (i < file_size){
             if (!internet_client->connected()){
               Serial.println("Client not connected!");
-              flush_sd_timer.start();
+              can_log_timer.start();
               return false;
             }
             send_file = sd.open(file_name, O_READ);
@@ -208,7 +208,7 @@ bool DataUploader::upload_file(char* file_name){
           Serial.println("Sent entire file");
         #endif
         sd_logger.reopen_file();
-        flush_sd_timer.start();
+        can_log_timer.start();
         sd_logger.no_write_file = true;
         return true;
       }

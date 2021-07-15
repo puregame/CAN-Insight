@@ -180,7 +180,8 @@ void SD_CAN_Logger::write_sd_line(char* line){
       #ifdef DEBUG
         Serial.println("file not opened! opening and trying again");
       #endif
-      data_file = SD.open(log_file_name, FILE_WRITE);
+      data_file = sd.open(log_file_name, FILE_WRITE);
       write_sd_line(line);
+    }
   }
 }

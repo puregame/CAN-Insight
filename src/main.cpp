@@ -29,8 +29,8 @@ Wifi_Manager wifi_manager = Wifi_Manager();
 // ******* Setup timers
 // This does not work when timelib.h is also included !
 //// timer for LED blinking
-PeriodicTimer can_log_timer(PIT);
-TeensyTimerTool::PeriodicTimer timer_NTP_check(TCK);
+TeensyTimerTool::PeriodicTimer can_log_timer(TeensyTimerTool::PIT);
+TeensyTimerTool::PeriodicTimer timer_NTP_check(TeensyTimerTool::TCK);
 
 // setup SD Card
 SdFs sd;
