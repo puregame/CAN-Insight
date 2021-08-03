@@ -92,7 +92,8 @@ void SD_CAN_Logger::can_frame_to_str(const CAN_message_t &msg, char* sTmp){
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.flags.extended);
   sprintf(sTmp+strlen(sTmp), ",%X", (unsigned int)msg.id);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.len);
-  for (int i=0; i<msg.len; i++){
+  byte len = min(msg.len, 8);
+  for (int i=0; i<len; i++){
     sprintf(sTmp+strlen(sTmp), ",%0.2X", msg.buf[i]);
   }
   strcat(sTmp, "\r\n");
