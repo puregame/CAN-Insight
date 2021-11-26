@@ -121,6 +121,8 @@ void setup_from_sd_card(){
 }
 
 void setup() {
+  pinMode(WIFI_WAKE, OUTPUT);
+  digitalWrite(WIFI_WAKE, HIGH);
   delay(100);
   setup_led();
   Serial.begin(115200);

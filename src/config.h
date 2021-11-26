@@ -35,6 +35,7 @@
 #define WIFI_IRQ_PIN 14
 #define WIFI_RESET_PIN 9
 #define WIFI_EN_PIN 32
+#define WIFI_WAKE 6
 
 #define CONF_WINC_DEBUG 1
 
