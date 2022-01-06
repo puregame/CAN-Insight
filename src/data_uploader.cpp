@@ -166,8 +166,10 @@ bool DataUploader::upload_file(char* file_name){
 
           char request_header[1400] = "POST /data_file/?log_name=";
           strcat(request_header, file_name);
-          strcat(request_header, "&unit_id=");
+          strcat(request_header, "&unit_number=");
           strcat(request_header, config.unit_number);
+          strcat(request_header, "&log_time=");
+          strcat(request_header, log_meta.log_start_time);
           strcat(request_header, " HTTP/1.1\nUser-Agent: Arduino/1.0\nContent-Type: text/plain\nContent-Length: ");
           strcat(request_header, file_size_str);
           strcat(request_header, "\n");
