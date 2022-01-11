@@ -137,7 +137,7 @@ bool DataUploader::upload_file(char* file_name){
     delay(100);
   #endif
   String request_uri = "/data_file/?unit_type=";
-  request_uri = request_uri + log_meta.unit_type + "&unit_number=" + log_meta.unit_number + "&log_time=" + log_meta.log_start_time;
+  request_uri = request_uri + log_meta.unit_type + "&unit_number=" + log_meta.unit_number + "&log_time=" + log_meta.log_start_time + "&log_name=" + file_name;
   http_client.beginRequest();
   http_client.get(request_uri);
   http_client.endRequest();
