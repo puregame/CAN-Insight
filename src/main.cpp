@@ -121,9 +121,10 @@ void setup_from_sd_card(){
 }
 
 void setup() {
+  pinMode(WIFI_WAKE, OUTPUT);
+  digitalWrite(WIFI_WAKE, HIGH);
   delay(100);
   setup_led();
-  timer_NTP_check.begin(check_set_rtc_from_wifi, 10s);
   Serial.begin(115200);
   Serial.println("Starting Program");
   
@@ -165,6 +166,27 @@ void setup() {
       #ifdef DEBUG
         Serial.println("Connected to network, trying upload new data");
       #endif
+      delay(100); // delay to 
+
+      // set RTC through NTP server
+      unsigned long before_set_rtc_time = Teensy3Clock.get();
+      if (check_set_rtc_from_wifi()){
+        if (Teensy3Clock.get() - before_set_rtc_time > 60){
+          #ifdef DEBUG
+            Serial.println("Setting RTC from Wifi worked and time delta >60s. restarting log to ensure proper datetime");
+          #endif
+          // if setting NTP worked then check new vs old time and restart logging to make sure time on the log is correct
+          sd_logger.restart_logging();  
+        }
+        else {
+          #ifdef DEBUG
+            Serial.println("Not resetting logging, time was close enough");
+          #endif
+        }
+      }
+
+      timer_NTP_check.begin(check_set_rtc_from_wifi, 100s);
+
       data_uploader.upload_data();
       #ifdef DEBUG
         Serial.println("uploaded data");

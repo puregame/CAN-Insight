@@ -68,18 +68,19 @@ bool check_serial_time(){
 void read_time_file() {
   Serial.println("Reading Time file");
   if (sd.exists(TIME_FILE_NAME)){
+    Serial.print("\tTime File Exists");
     FsFile time_file = sd.open(TIME_FILE_NAME, O_READ);
     time_file.seek(TIME_HEADER);
     unsigned long pctime = 0L;
     pctime = time_file.parseInt();
     Serial.println(pctime);
     if( pctime > DEFAULT_TIME) { // check the value is a valid time (greater than Jan 10 2021)
+      Serial.print("\tSet new time via SD Card: ");
       Teensy3Clock.set(pctime);
-      Serial.print("Set new time via SD Card: ");
       serial_print_current_time();
     }
     else{
-      Serial.println("SD Card time too old, known bad time");
+      Serial.println("\tSD Card time too old, known bad time");
     }
     time_file.close();
     sd.remove(TIME_FILE_NAME);

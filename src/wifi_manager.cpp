@@ -39,6 +39,9 @@ bool Wifi_Manager::search_and_connect(){
   uint8 num_ssid = WiFi.scanNetworks();
 
   for (uint8 i=0; i < num_ssid; i++){
+    if (strcmp(WiFi.SSID(i), "") == 0){
+      continue;
+    }
     for (uint8 j=0; j < MAX_SAVED_NETWORK_COUNT; j++){
       if (strcmp(WiFi.SSID(i), possible_networks[j].ssid) == 0){
         // future: set RSSI in rssi array to the value of this network

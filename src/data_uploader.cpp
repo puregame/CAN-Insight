@@ -12,6 +12,7 @@ extern SdFs sd;
 #include "TeensyTimerTool.h"
 extern TeensyTimerTool::PeriodicTimer can_log_timer;
 extern SD_CAN_Logger sd_logger;
+extern Config_Manager config;
 
 DataUploader::DataUploader(Client& in_internet_client, char* in_server, int in_port, int _max_log_to_upload):
     http_client(in_internet_client, in_server, in_port){ //, internet_client(&in_internet_client){
@@ -136,13 +137,13 @@ bool DataUploader::upload_file(char* file_name){
     delay(100);
   #endif
   String request_uri = "/data_file/?unit_type=";
-  request_uri = request_uri + log_meta.unit_type + "&unit_number=" + log_meta.unit_number + "&log_time=" + log_meta.log_start_time;
+  request_uri = request_uri + log_meta.unit_type + "&unit_number=" + log_meta.unit_number + "&log_time=" + log_meta.log_start_time + "&log_name=" + file_name;
   http_client.beginRequest();
   http_client.get(request_uri);
   http_client.endRequest();
   int status_code = http_client.responseStatusCode();
   #ifdef DEBUG
-    Serial.print("Sent request for unit info, got status code");
+    Serial.print("Sent request for unit info, got status code: ");
     Serial.println(status_code);
     delay(100);
   #endif
@@ -154,7 +155,7 @@ bool DataUploader::upload_file(char* file_name){
         delay(100);
       #endif
         if (internet_client->connect(server, port)) {
-          Serial.println("- connected to server");
+          Serial.println("connected to server");
           
           Serial.println("reading data file");
           sd_logger.no_write_file = true;
@@ -165,6 +166,10 @@ bool DataUploader::upload_file(char* file_name){
 
           char request_header[1400] = "POST /data_file/?log_name=";
           strcat(request_header, file_name);
+          strcat(request_header, "&unit_number=");
+          strcat(request_header, config.unit_number);
+          strcat(request_header, "&log_time=");
+          strcat(request_header, log_meta.log_start_time);
           strcat(request_header, " HTTP/1.1\nUser-Agent: Arduino/1.0\nContent-Type: text/plain\nContent-Length: ");
           strcat(request_header, file_size_str);
           strcat(request_header, "\n");
@@ -210,6 +215,7 @@ bool DataUploader::upload_file(char* file_name){
         sd_logger.reopen_file();
         can_log_timer.start();
         sd_logger.no_write_file = true;
+        internet_client->stop();
         return true;
       }
     }
