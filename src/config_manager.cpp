@@ -74,7 +74,7 @@ int Config_Manager::read_config_file() {
       Serial.println(unit_number);
     #endif
   }
-
+  
   if (config_root.containsKey("can1")){ // if can1 key exists then process it, otherwise set it to default confi
     temp_object = config_root["can1"];
     set_can_config_from_jsonobject(temp_object, 0);
@@ -95,6 +95,13 @@ int Config_Manager::read_config_file() {
   }
   else
     set_default_can_config(2);
+  
+  if (config_root.containsKey("overwrite_logs")){
+    #ifdef DEBUG
+      Serial.println("overwrite_logs in config file");
+    #endif
+    overwrite_logs = config_root["overwrite_logs"] | false;
+  }
   
   if (config_root.containsKey("wifi_enable")){
     #ifdef DEBUG

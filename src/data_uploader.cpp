@@ -69,7 +69,6 @@ void DataUploader::upload_data(){
   // *********************** WHY IS THIS UPLOADING THE SAME FILE THAT IT ALREADY DID LAST RUN *********************
   // assume in_internet_client is already connected to a network
   #ifdef DEBUG
-    next_log_to_upload=0; // set next log to upload to zero, upload all logs every time for debug
     Serial.print("Starting upload_data with next file: ");
     Serial.println(next_log_to_upload);
     Serial.print("Will not upload logs above: ");

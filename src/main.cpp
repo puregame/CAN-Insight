@@ -63,6 +63,18 @@ void setup_from_sd_card(){
   }
   read_time_file();
 
+  // insert check size stuff here
+  uint32_t freeKB = sd.vol()->freeClusterCount();
+  Serial.print("Free Clusters: ");
+  Serial.println(freeKB);
+  freeKB *= sd.vol()->blocksPerCluster()/2;
+  Serial.print("Blocks per Cluster: ");
+  Serial.println(sd.vol()->blocksPerCluster());
+  Serial.print("Bytes per Cluster: ");
+  Serial.println(sd.vol()->bytesPerCluster());
+  Serial.print("Free space KB: ");
+  Serial.println(freeKB);
+
   if (!config.read_config_file()) Serial.println("Config File read error!");
 
   config.serial_print_bus_config_str(0);
@@ -155,7 +167,7 @@ void setup() {
       delay(10);
     #endif
     wifi_manager.search_and_connect();
-    DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port, sd_logger.next_file_number-1);
+    DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port, sd_logger.next_log_file_number-1);
     
     #ifdef DEBUG
       Serial.print("next log to upload: ");

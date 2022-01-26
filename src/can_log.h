@@ -18,8 +18,11 @@ class SD_CAN_Logger {
         void reopen_file();
         static void flush_sd_file();
         void restart_logging();
-        uint16_t next_file_number = 0;
+        uint16_t next_log_file_number = 1;
+        uint16_t first_log_file_number = 0;
         bool no_write_file = false;
+        void check_sd_free_space();
+        int get_current_log_count();
     private:
         char write_buffer[SD_WRITE_BUFFER_LEN];
         void print_end_log_line();
@@ -30,4 +33,5 @@ class SD_CAN_Logger {
         unsigned long log_start_millis;
         Config_Manager* config;
         bool log_enabled = true;
+        bool overwriting_old_files = false;
 };

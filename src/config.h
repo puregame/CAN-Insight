@@ -12,6 +12,7 @@
 /// ******  log file parameters *****
 #define LOG_FILE_NAME_LENGTH 12
 #define DEFAULT_LOG_FILE_NAME "CAN_000.log"
+#define MAX_LOG_NUMBER 9999
 #define LOG_FILE_NUM_POS 4 // position of start of 3-set sequential numer of log
 #define LOG_FILE_DOT_POS 7
 #define DEFAULT_MAX_LOG_FILE_SIZE 1000000000 // 1 million bytes = 1 gigabyte
@@ -48,3 +49,5 @@
 
 // EEPROM setups
 #define EEPROM_LOGs_UPLOADED_LOCATION 10
+#define EEPROM_LOCATION_NEXT_LOG_NUM 0
+#define EEPROM_LOCATION_FIRST_LOG_NUM 4
