@@ -97,10 +97,19 @@ int Config_Manager::read_config_file() {
     set_default_can_config(2);
   
   if (config_root.containsKey("overwrite_logs")){
-    #ifdef DEBUG
-      Serial.println("overwrite_logs in config file");
-    #endif
     overwrite_logs = config_root["overwrite_logs"] | false;
+    #ifdef DEBUG
+      Serial.print("overwrite_logs in config file: ");
+      Serial.println(overwrite_logs);
+    #endif
+  }
+  
+  if (config_root.containsKey("delete_uploaded_logs")){
+    delete_uploaded_logs = config_root["delete_uploaded_logs"] | false;
+    #ifdef DEBUG
+      Serial.print("delete_uploaded_logs in config file: ");
+      Serial.println(delete_uploaded_logs);
+    #endif
   }
   
   if (config_root.containsKey("wifi_enable")){

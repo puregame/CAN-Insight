@@ -23,6 +23,7 @@ class Config_Manager{
         char server[SERVER_MAX_LEN];
         uint16_t port;
         bool overwrite_logs;
+        bool delete_uploaded_logs;
     private:
 };
 
