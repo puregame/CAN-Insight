@@ -11,5 +11,14 @@
         "id_filter_value": 45,
         "some other key": "doesn't matter"
     },
-    "can3":{"baudrate": 250000}
+    "can3":{"baudrate": 250000},
+    "wifi_enable": true,
+    "server": "logserver.mycompany.com",
+    "port": 5000,
+    "overwrite_logs": true,
+    "wifi_networks": [
+        {"ssid": "ssid-1",
+         "password": "password-1"
+        }
+    ]
 }

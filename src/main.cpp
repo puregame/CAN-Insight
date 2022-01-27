@@ -78,13 +78,6 @@ void setup_from_sd_card(){
 
   sd_logger.max_log_size = config.max_log_size;
 
-  sd_logger.set_next_log_filename();
-  #ifdef DEBUG
-    Serial.print("Logging on file:");
-    char log_name[20];
-    sd_logger.get_log_filename(log_name);
-    Serial.println(log_name);
-  #endif
   sd_logger.start_log();
   can_log_timer.begin(sd_logger.flush_sd_file, 1s); // flush sd file every second
 
@@ -155,8 +148,8 @@ void setup() {
       delay(10);
     #endif
     wifi_manager.search_and_connect();
-    DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port, sd_logger.next_file_number-1);
-    
+    DataUploader data_uploader = DataUploader(wifi_manager.get_client(), config.server, config.port);
+
     #ifdef DEBUG
       Serial.print("next log to upload: ");
       Serial.println(data_uploader.next_log_to_upload);
@@ -166,7 +159,6 @@ void setup() {
       #ifdef DEBUG
         Serial.println("Connected to network, trying upload new data");
       #endif
-      delay(100); // delay to 
 
       // set RTC through NTP server
       unsigned long before_set_rtc_time = Teensy3Clock.get();
@@ -212,6 +204,9 @@ void loop ()
   TeensyTimerTool::tick();
   if (check_serial_time()){
     // time was updated, restart logging
+    #ifdef DEBUG
+      Serial.println("Restarting logging for serial time received");
+    #endif
     sd_logger.restart_logging();
   }
 }

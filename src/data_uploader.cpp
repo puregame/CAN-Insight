@@ -1,5 +1,3 @@
-
-// #include <ArduinoHttpClient.h>
 #include "config.h"
 #include "data_uploader.h"
 #include "helpers.h"
@@ -14,38 +12,49 @@ extern TeensyTimerTool::PeriodicTimer can_log_timer;
 extern SD_CAN_Logger sd_logger;
 extern Config_Manager config;
 
-DataUploader::DataUploader(Client& in_internet_client, char* in_server, int in_port, int _max_log_to_upload):
-    http_client(in_internet_client, in_server, in_port){ //, internet_client(&in_internet_client){
-    internet_client = &in_internet_client;
-    max_log_to_upload = _max_log_to_upload;
-    strcpy(server, in_server);
-    port = in_port;
-    get_logs_uploaded();
+DataUploader::DataUploader(Client& in_internet_client, char* in_server, int in_port):
+  http_client(in_internet_client, in_server, in_port){ //, internet_client(&in_internet_client){
+  internet_client = &in_internet_client;
+  strcpy(server, in_server);
+  port = in_port;
+  EEPROM.get(EEPROM_LOCATION_UPLOADER_MAX_LOG, max_log_to_upload);
+  EEPROM.get(EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY, next_log_to_upload);
+  if (next_log_to_upload > max_log_to_upload){
+    next_log_to_upload = 1;
+    EEPROM.put(EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY, next_log_to_upload);
+  }
+  #ifdef DEBUG
+    Serial.print("EEPROM next log to upload: ");
+    Serial.println(next_log_to_upload);
+    Serial.print("EEPROM max log to upload: ");
+    Serial.println(max_log_to_upload);
+  #endif
+  get_logs_uploaded();
 };
 
 void DataUploader::get_logs_uploaded(){
   // read EEPROM for latest file
-  EEPROM.get(EEPROM_LOGs_UPLOADED_LOCATION, next_log_to_upload);
   char file_name[LOG_FILE_NAME_LENGTH] = DEFAULT_LOG_FILE_NAME;
   sprintf_num_to_logfile_name(next_log_to_upload, file_name);
 
   // IF the file does not exist, or we are are starting at log zero then reset logs to upload to zero
-  if (!sd.exists(file_name) | (max_log_to_upload < 0))
-    set_next_log_to_upload_to_zero();
+  if (!sd.exists(file_name))
+    reset_next_log_to_upload();
 }
 
-void DataUploader::set_next_log_to_upload_to_zero(){
-  next_log_to_upload = 0;
-  EEPROM.put(EEPROM_LOGs_UPLOADED_LOCATION, next_log_to_upload);
+void DataUploader::reset_next_log_to_upload(){
+  next_log_to_upload = 1;
+  EEPROM.put(EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY, next_log_to_upload);
 }
 
 bool DataUploader::increment_next_log_to_upload(){
-  if (next_log_to_upload >= max_log_to_upload){
+  // increment first since this file has already been uploaded
+  next_log_to_upload++;
+  EEPROM.put(EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY, next_log_to_upload);
+  if (next_log_to_upload + 1 > max_log_to_upload){
     // if next log would be higher than logs currently ready for upload, do not increment
     return false;
   }
-  next_log_to_upload++;
-  EEPROM.put(EEPROM_LOGs_UPLOADED_LOCATION, next_log_to_upload);
   # ifdef DEBUG
     Serial.print("Incrementing next log to upload to: ");
     Serial.println(next_log_to_upload);
@@ -69,7 +78,6 @@ void DataUploader::upload_data(){
   // *********************** WHY IS THIS UPLOADING THE SAME FILE THAT IT ALREADY DID LAST RUN *********************
   // assume in_internet_client is already connected to a network
   #ifdef DEBUG
-    next_log_to_upload=0; // set next log to upload to zero, upload all logs every time for debug
     Serial.print("Starting upload_data with next file: ");
     Serial.println(next_log_to_upload);
     Serial.print("Will not upload logs above: ");
@@ -85,24 +93,19 @@ void DataUploader::upload_data(){
   char file_name[LOG_FILE_NAME_LENGTH] = DEFAULT_LOG_FILE_NAME;
   sprintf_num_to_logfile_name(next_log_to_upload, file_name);
 
-  // if the last file that has been sent does not exist, start from zero
+  // if the next file to be sent sent does not exist, start from zero
   if (!sd.exists(file_name)){
     #ifdef DEBUG
-      Serial.print("Latest file does not exist, setting next file to zero, file that does not exist: ");
+      Serial.print("File to be uploaded does not exist, file that does not exist: ");
       Serial.println(file_name);
     #endif
-    set_next_log_to_upload_to_zero();
     return;
   }
-  else {
-    #ifdef DEBUG
-      Serial.print("latest file to upload does exist: ");
-      Serial.println(file_name);
-    #endif
-  }
+  
   while (sd.exists(file_name)){
     // loop over file_name until file_name does not exist any more
     if (upload_file(file_name)){
+      // returns true if file uploaded properly
       if (!increment_next_log_to_upload()){
         // increment failed because next log file would be too high
         #ifdef DEBUG
@@ -214,7 +217,7 @@ bool DataUploader::upload_file(char* file_name){
         #endif
         sd_logger.reopen_file();
         can_log_timer.start();
-        sd_logger.no_write_file = true;
+        sd_logger.no_write_file = false;
         internet_client->stop();
         return true;
       }

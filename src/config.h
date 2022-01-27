@@ -12,13 +12,14 @@
 /// ******  log file parameters *****
 #define LOG_FILE_NAME_LENGTH 12
 #define DEFAULT_LOG_FILE_NAME "CAN_000.log"
+#define MAX_LOG_NUMBER 999 // todo: change this back to 9999
 #define LOG_FILE_NUM_POS 4 // position of start of 3-set sequential numer of log
 #define LOG_FILE_DOT_POS 7
 #define DEFAULT_MAX_LOG_FILE_SIZE 1000000000 // 1 million bytes = 1 gigabyte
 #define EOF_CAN_LOGFILE "---- EOF NEXT FILE TO FOLLOW ----"
 #define HEADER_CSV "timestamp,CAN_BUS,CAN_EXT,CAN_ID,CAN_LEN,Data0,Data1,Data2,Data3,Data4,Data5,Data6,Data7"
 #define SD_WRITE_BUFFER_LEN 30000 // 30,000 chars in buffer, 
-                                   // buffer writes every half, 
+                                   // buffer writes every half second, 
                                    // assuming max line length of 50 would take 1200 messages per second to overflow buffer during file upload
 
 /// ******  config file parameters *****
@@ -47,4 +48,7 @@
 #define SERVER_MAX_LEN 30
 
 // EEPROM setups
-#define EEPROM_LOGs_UPLOADED_LOCATION 10
+#define EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY 10
+#define EEPROM_LOCATION_UPLOADER_MAX_LOG 12
+#define EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM 0
+#define EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM 4
