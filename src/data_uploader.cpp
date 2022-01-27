@@ -158,9 +158,9 @@ bool DataUploader::upload_file(char* file_name){
         delay(100);
       #endif
         if (internet_client->connect(server, port)) {
-          Serial.println("connected to server");
+          Serial.println("\tConnected to server");
           
-          Serial.println("reading data file");
+          Serial.println("\tReading data file");
           sd_logger.no_write_file = true;
           FsFile send_file = sd.open(file_name, O_READ);
           uint64_t file_size = send_file.size();
@@ -184,12 +184,12 @@ bool DataUploader::upload_file(char* file_name){
           uint8_t buf[FILE_BUF_LEN] = "";
           uint64_t i = 0;
           uint64_t file_pos = 0;
-          Serial.print("Sending data:");
+          Serial.println("\tSending data: ");
           can_log_timer.stop();
           uint32_t last_sd_write = millis();
           while (i < file_size){
             if (!internet_client->connected()){
-              Serial.println("Client not connected!");
+              Serial.println("\rClient not connected!");
               can_log_timer.start();
               return false;
             }
@@ -213,28 +213,54 @@ bool DataUploader::upload_file(char* file_name){
             }
         }
         #ifdef DEBUG
-          Serial.println("Sent entire file");
+          Serial.println("\t\tSent entire file");
         #endif
         sd_logger.reopen_file();
         can_log_timer.start();
         sd_logger.no_write_file = false;
+        // get HTTP status code
+        if (internet_client->available()){
+          char status[13];
+          internet_client->readBytes(status, 12);
+          status[12] = '\0';
+          
+          if (strcmp(&status[9], "200") == 0){
+            #ifdef DEBUG
+              Serial.println("\tStatus is 200, can increment log file to send and delete this file");
+            #endif
+            if (config.delete_uploaded_logs){
+              sd.remove(file_name);
+              #ifdef DEBUG
+                Serial.print("\tDeleted file: ");
+                Serial.println(file_name);
+              #endif
+              sd_logger.first_log_file_number++;
+              EEPROM.put(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, sd_logger.first_log_file_number)
+              ;// delete log that just got uploaded
+            }
+          }
+          else{
+            // server did not return success, do not increment file to send!
+            return false;
+          }
+        }
         internet_client->stop();
         return true;
       }
     }
     else if (status_code == 200){
       #ifdef DEBUG
-        Serial.println("File already exists, will not upload");
+        Serial.println("\t File already exists, will not upload");
       #endif
       return true;
     }
     else if (status_code == HTTP_ERROR_TIMED_OUT){
       #ifdef DEBUG
-        Serial.println("Could not connect to server, timeout");
+        Serial.println("\tCould not connect to server, timeout");
       #endif
       return false;
     }
     else
-      Serial.println("Will not upload file, other error");
+      Serial.println("\tWill not upload file, other error");
       return false;
 }
