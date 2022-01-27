@@ -27,7 +27,7 @@ DataUploader::DataUploader(Client& in_internet_client, char* in_server, int in_p
     Serial.print("EEPROM next log to upload: ");
     Serial.println(next_log_to_upload);
     Serial.print("EEPROM max log to upload: ");
-    Serial.println(max_log_to_upload);
+    Serial.println(max_log_to_upload-1);
   #endif
   get_logs_uploaded();
 };
