@@ -16,15 +16,11 @@ FsFile SD_CAN_Logger::data_file;
 
 SD_CAN_Logger::SD_CAN_Logger(Config_Manager* _config){
   config = _config;
-
   // get the latest first and next log file numbers
-  EEPROM.get(EEPROM_LOCATION_FIRST_LOG_NUM, first_log_file_number);
-  EEPROM.get(EEPROM_LOCATION_NEXT_LOG_NUM, next_log_file_number);
+  EEPROM.get(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
+  EEPROM.get(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
   if (next_log_file_number > MAX_LOG_NUMBER | first_log_file_number > MAX_LOG_NUMBER){
-    next_log_file_number = 1;
-    first_log_file_number = 0;
-    EEPROM.put(EEPROM_LOCATION_FIRST_LOG_NUM, next_log_file_number);
-    EEPROM.put(EEPROM_LOCATION_FIRST_LOG_NUM, first_log_file_number);
+    reset_log_file_numbers();
   }
   #ifdef DEBUG
     Serial.print("EEPROM first log file number: ");
@@ -32,6 +28,15 @@ SD_CAN_Logger::SD_CAN_Logger(Config_Manager* _config){
     Serial.print("EEPROM next log file number: ");
     Serial.println(next_log_file_number);
   #endif
+}
+
+void SD_CAN_Logger::reset_log_file_numbers(){
+  next_log_file_number = 1;
+  first_log_file_number = 0;
+  EEPROM.put(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
+  EEPROM.put(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
+  EEPROM.put(EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY, uint16_t(1));
+  EEPROM.put(EEPROM_LOCATION_UPLOADER_MAX_LOG, uint16_t(0));
 }
 
 void SD_CAN_Logger::flush_sd_file(){
@@ -66,9 +71,19 @@ int SD_CAN_Logger::start_log(){
   if (!check_sd_free_space()){ // before starting to log, check and free up SD card space
     // nothing else to do, logging is disabed, return
     return 0;
-  } 
+  }
+  if (!set_next_log_filename()){
+    // could not get a free log file name, return and do not log
+    return 0;
+  }
+  #ifdef DEBUG
+    Serial.print("Logging on file: ");
+    Serial.println(log_file_name);
+  #endif
   data_file.close();
   data_file = sd.open(log_file_name, FILE_WRITE);
+  // set max log to upload to this log-1
+  EEPROM.put(EEPROM_LOCATION_UPLOADER_MAX_LOG, next_log_file_number - 1);
   // if the file is available, write to it:
   if (data_file) {
     // print header file in the log
@@ -106,7 +121,7 @@ int SD_CAN_Logger::start_log(){
   if (first_log_file_number == 0){
     // if this is the first time we started a log then set first log accordingly
     first_log_file_number = 1;
-    EEPROM.put(EEPROM_LOCATION_FIRST_LOG_NUM, first_log_file_number);
+    EEPROM.put(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
   }
   return 1;
 }
@@ -126,11 +141,14 @@ void SD_CAN_Logger::can_frame_to_str(const CAN_message_t &msg, char* sTmp){
 
 int SD_CAN_Logger::get_current_log_count(){
   // return count of log files including log that we are currently logging to
+  if (first_log_file_number > next_log_file_number)  
+    // if next log file number is less than first log file number then logs have wrapped
+    return MAX_LOG_NUMBER;
   return first_log_file_number - next_log_file_number + 1;
 }
 
-void SD_CAN_Logger::set_next_log_filename(){
-  // search for and set the next log file name (log_file_name) into this object
+bool SD_CAN_Logger::set_next_log_filename(){
+  // search for and set the log_file_name and next_log_file_number into self object
   // returns: none
   Serial.println("Getting next log file name.");
 
@@ -145,8 +163,8 @@ void SD_CAN_Logger::set_next_log_filename(){
       sd.remove(log_file_name);
       next_log_file_number++;
       first_log_file_number++;
-      EEPROM.put(EEPROM_LOCATION_NEXT_LOG_NUM, next_log_file_number);
-      EEPROM.put(EEPROM_LOCATION_FIRST_LOG_NUM, first_log_file_number);
+      EEPROM.put(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
+      EEPROM.put(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
       return; // file has been removed, it can now be used
     }
   }
@@ -154,16 +172,13 @@ void SD_CAN_Logger::set_next_log_filename(){
   // if first log file does not exist then assume SD card has been cleared and start logging at log 1
   sprintf_num_to_logfile_name(first_log_file_number, log_file_name);
   if (!sd.exists(log_file_name)){
-    next_log_file_number = 1;
-    first_log_file_number = 0;
+    reset_log_file_numbers();
     sprintf_num_to_logfile_name(next_log_file_number, log_file_name);
     #ifdef DEBUG
       Serial.print("\tFirst log file does not exist, resetting, using file: ");
       Serial.println(log_file_name);
     #endif
-    EEPROM.put(EEPROM_LOCATION_NEXT_LOG_NUM, next_log_file_number);
-    EEPROM.put(EEPROM_LOCATION_FIRST_LOG_NUM, first_log_file_number);
-    return;
+    return true;
   }
   
   if (next_log_file_number > MAX_LOG_NUMBER){
@@ -176,12 +191,12 @@ void SD_CAN_Logger::set_next_log_filename(){
   if (!sd.exists(log_file_name)){ 
     // next log file that we tried does not exist then use this number, increment the next one and use this file name
     next_log_file_number++;
-    EEPROM.put(EEPROM_LOCATION_NEXT_LOG_NUM, next_log_file_number);
+    EEPROM.put(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
     #ifdef DEBUG
       Serial.print("\tNext log file does not exist, using file: ");
       Serial.println(log_file_name);
     #endif
-    return; // return with this log_file_name as the one to use
+    return true; // return with this log_file_name as the one to use
   }
   else{
     // next log file that we tried does exist, what to do?
@@ -196,8 +211,8 @@ void SD_CAN_Logger::set_next_log_filename(){
       if (!sd.exists(log_file_name)){
         // this file does not exist, use it
         next_log_file_number = log_file_to_try+1;
-        EEPROM.put(EEPROM_LOCATION_NEXT_LOG_NUM, next_log_file_number);
-        return;
+        EEPROM.put(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
+        return true;
       }
       log_file_to_try++;
       if (log_file_to_try > MAX_LOG_NUMBER){
@@ -222,17 +237,19 @@ void SD_CAN_Logger::set_next_log_filename(){
       sd.remove(log_file_name);
       first_log_file_number ++;
       next_log_file_number = first_log_file_number;
-      EEPROM.put(EEPROM_LOCATION_NEXT_LOG_NUM, next_log_file_number);
-      EEPROM.put(EEPROM_LOCATION_FIRST_LOG_NUM, first_log_file_number);
+      EEPROM.put(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
+      EEPROM.put(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
       overwriting_old_files = true;
-      return; // file has been removed, it can now be used
+      return true; // file has been removed, it can now be used
     }
     else{
       // Stop logging
       Serial.println("Stopping all logging, will not overwrite logs");
-      log_enabled=false;
+      return false;
     }
   }
+  Serial.println("unknown state, no logging");
+  return false;
 }
 
 bool SD_CAN_Logger::check_sd_free_space(){
@@ -257,7 +274,7 @@ bool SD_CAN_Logger::check_sd_free_space(){
     if (!config->overwrite_logs){
       // if we are not allowed to overwrite logs return 0
       #ifdef DEBUG
-        Serial.println("SD Card full but not allowed to delete files.");
+        Serial.println("SD Card almost full but not allowed to delete files. Will not log to SD.");
       #endif
       return 0;
     }
@@ -272,7 +289,7 @@ bool SD_CAN_Logger::check_sd_free_space(){
     if (first_log_file_number > MAX_LOG_NUMBER){
       first_log_file_number = 1;
     }
-    EEPROM.put(EEPROM_LOCATION_FIRST_LOG_NUM, first_log_file_number);
+    EEPROM.put(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
     sprintf_num_to_logfile_name(first_log_file_number, log_file_to_delete);
     // recalculate free space
     freeKB = sd.vol()->freeClusterCount();
@@ -295,8 +312,9 @@ void SD_CAN_Logger::print_end_log_line(){
 }
 
 void SD_CAN_Logger::restart_logging(){
-  data_file.close();
-  set_next_log_filename();
+    #ifdef DEBUG
+      Serial.println("\tRestarting logging");
+    #endif
   start_log();
 }
 
@@ -310,7 +328,10 @@ void SD_CAN_Logger::write_sd_line(char* line){
       Serial.println("ERROR: sd file buffer overrun!");
       return;
     }
-    strcat(write_buffer, line);
+    if (strlen(write_buffer)+strlen(line) < SD_WRITE_BUFFER_LEN){
+      // if there is enough space in the buffer then append the line, otherwise ignore
+      strcat(write_buffer, line);
+    }
   }
   else{
     if (data_file) {
@@ -321,12 +342,14 @@ void SD_CAN_Logger::write_sd_line(char* line){
       data_file.print(line);
 
       if (data_file.size() > max_log_size){
+        // if the file is too big, write EOF_CAN_LOGFILE line and restart logging
+        print_end_log_line();
         restart_logging();
       }
     }
     else{
-      // if the file isn't open, pop up an error:
       #ifdef DEBUG
+        // if the file isn't open, pop up an error:
         Serial.println("file not opened! opening and trying again");
       #endif
       data_file = sd.open(log_file_name, FILE_WRITE);

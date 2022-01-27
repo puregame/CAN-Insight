@@ -11,7 +11,6 @@ class SD_CAN_Logger {
         SD_CAN_Logger(Config_Manager* _config);
         uint32_t max_log_size;
         int start_log();
-        void set_next_log_filename();
         void get_log_filename(char* name);
         void can_frame_to_str(const CAN_message_t &msg, char* sTmp);
         void write_sd_line(char* line);
@@ -24,6 +23,8 @@ class SD_CAN_Logger {
         bool check_sd_free_space();
         int get_current_log_count();
     private:
+        void reset_log_file_numbers();
+        bool set_next_log_filename();
         char write_buffer[SD_WRITE_BUFFER_LEN];
         void print_end_log_line();
         void set_time_since_log_start_in_buffer(char* sTmp);
