@@ -46,10 +46,7 @@ void SD_CAN_Logger::flush_sd_file(){
     sd_logger.write_buffer[0]='\0'; // clear the write buffer
   }
 
-  set_led_from_status(writing_sd);
   data_file.flush();
-  delay(40);
-  set_led_from_status(waiting_for_data);
 }
 
 void SD_CAN_Logger::reopen_file(){

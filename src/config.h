@@ -3,6 +3,8 @@
     // slows down startup to allow serial to open
     // prints on usb serial every can message received
 
+// #DEFINE DEBUG_SERIAL_PRINT_CAN_MSGS // Uncomment to enable serial printing of ALL can messages
+
 /// ***** Time Parameters *****
 #define TIME_FILE_NAME "NOW.TXT"
 #define DEFAULT_TIME 1610331025 // Jan 10 2021 

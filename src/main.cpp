@@ -13,6 +13,7 @@
 
 using namespace std;
 
+uint last_off = 0;
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2;
@@ -45,7 +46,7 @@ void can_callback(const CAN_message_t &msg) {
     // id filtering in akpc CAN_Logger uses if ((rxmsg.EID & iFilterMask) != (iFilterValue & iFilterMask)) continue;
   char temp_str[128];
   sd_logger.can_frame_to_str(msg, temp_str);
-  #ifdef DEBUG
+  #ifdef DEBUG_SERIAL_PRINT_CAN_MSGS
     Serial.print("Got CAN message: ");
     Serial.print(temp_str);
   #endif
@@ -208,5 +209,14 @@ void loop ()
       Serial.println("Restarting logging for serial time received");
     #endif
     sd_logger.restart_logging();
+  }
+
+  // blink LED blue every second
+  if (millis() > last_off + 1000) {
+    set_led_from_status(writing_sd);
+  }
+  else if (millis() > last_off + 1050) {
+    last_off = millis();
+    set_led_from_status(waiting_for_data);
   }
 }

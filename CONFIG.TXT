@@ -16,6 +16,7 @@
     "server": "logserver.mycompany.com",
     "port": 5000,
     "overwrite_logs": true,
+    "delete_uploaded_logs": false,
     "wifi_networks": [
         {"ssid": "ssid-1",
          "password": "password-1"
