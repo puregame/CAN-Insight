@@ -68,6 +68,7 @@ void DataUploader::test_get_route(char* route_url){
   http_client.beginRequest();
   http_client.get(route_url);
   http_client.endRequest();
+  
   Serial.print("Got status code: ");
   Serial.println(http_client.responseStatusCode());
   Serial.print("HTTP response: ");
