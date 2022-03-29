@@ -212,11 +212,11 @@ void loop ()
   }
 
   // blink LED blue every second
-  if (millis() > last_off + 1000) {
-    set_led_from_status(writing_sd);
-  }
-  else if (millis() > last_off + 1050) {
+  if (millis() > last_off + 1200) {
     last_off = millis();
     set_led_from_status(waiting_for_data);
+  }
+  else if (millis() > last_off + 1000) {
+    set_led_from_status(writing_sd);
   }
 }
