@@ -1,0 +1,34 @@
+{
+  "configurations": [
+    {
+      "name": "VisualTeensy",
+      "includePath": [
+        "src/**",
+        "C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4",
+        "C:/Users/Matthew Gougeon/Documents/Arduino/libraries/TeensyTimerTool/**",
+        "C:/Users/Matthew Gougeon/Documents/Arduino/libraries/FlexCAN_T4/**",
+        "lib/ArduinoHttpClient/**",
+        "lib/ArduinoJson/**",
+        "lib/EEPROM/**",
+        "lib/SdFat/**",
+        "lib/SPI/**",
+        "lib/Time/**",
+        "lib/WiFi101/**"
+      ],
+      "forcedInclude": [],
+      "defines": [
+        "__IMXRT1062__",
+        "TEENSYDUINO=153",
+        "ARDUINO_TEENSY41",
+        "F_CPU=600000000",
+        "USB_SERIAL",
+        "LAYOUT_US_ENGLISH",
+        "ARDUINO"
+      ],
+      "compilerPath": "C:/PROGRA~2/Arduino/hardware/tools/arm/bin/arm-none-eabi-gcc.exe",
+      "intelliSenseMode": "gcc-arm",
+      "cppStandard": "gnu++14"
+    }
+  ],
+  "version": 4
+}

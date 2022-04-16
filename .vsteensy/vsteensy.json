@@ -1,0 +1,40 @@
+{
+  "version": "1",
+  "target": "vsCode",
+  "buildSystem": "makefile",
+  "debugSupport": "none",
+  "configurations": [
+    {
+      "name": "default",
+      "guid": "765c5ff4-8d8a-45ca-b3d8-97d40c075f3d",
+      "setupType": "quick",
+      "coreBase": "C:\\Program Files (x86)\\Arduino\\hardware\\teensy\\avr",
+      "compilerBase": "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\arm",
+      "makefileExtension": null,
+      "copyCore": false,
+      "sharedLibraries": [
+        "TeensyTimerTool",
+        "FlexCAN_T4"
+      ],
+      "projectLibraries": [
+        "ArduinoHttpClient",
+        "ArduinoJson",
+        "EEPROM",
+        "SD",
+        "SdFat",
+        "SPI",
+        "Time",
+        "WiFi101"
+      ],
+      "board": {
+        "name": "Teensy 4.1",
+        "options": {
+          "USB Type": "Serial",
+          "CPU Speed": "600 MHz",
+          "Optimize": "Faster",
+          "Keyboard Layout": "US English"
+        }
+      }
+    }
+  ]
+}
