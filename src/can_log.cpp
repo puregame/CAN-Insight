@@ -123,7 +123,20 @@ int SD_CAN_Logger::start_log(){
   return 1;
 }
 
-void SD_CAN_Logger::can_frame_to_str(const CAN_message_t &msg, char* sTmp){
+void SD_CAN_Logger::can_frame_to_str_log(const CAN_message_t &msg, char* sTmp){
+  set_time_since_log_start_in_buffer(sTmp);
+  sprintf(sTmp+strlen(sTmp), "-%d-", (unsigned int)msg.bus);
+
+
+  sprintf(sTmp+strlen(sTmp), "%X#", (unsigned int)msg.id);
+  byte len = min(msg.len, 8);
+  for (int i=0; i<len; i++){
+    sprintf(sTmp+strlen(sTmp), "%0.2X", msg.buf[i]);
+  }
+  strcat(sTmp, "\r\n");
+}
+
+void SD_CAN_Logger::can_frame_to_str_csv(const CAN_message_t &msg, char* sTmp){
   set_time_since_log_start_in_buffer(sTmp);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.bus);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.flags.extended);
