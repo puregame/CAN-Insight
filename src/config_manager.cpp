@@ -103,6 +103,14 @@ int Config_Manager::read_config_file() {
       Serial.println(overwrite_logs);
     #endif
   }
+
+  if (config_root.containsKey("log_csv")){
+    log_csv = config_root["log_csv"] | false;
+    #ifdef DEBUG
+      Serial.print("log_csv in config file: ");
+      Serial.println(log_csv);
+    #endif
+  }
   
   if (config_root.containsKey("delete_uploaded_logs")){
     delete_uploaded_logs = config_root["delete_uploaded_logs"] | false;

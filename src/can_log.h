@@ -29,7 +29,7 @@ class SD_CAN_Logger {
         char write_buffer[SD_WRITE_BUFFER_LEN];
         void print_end_log_line();
         void set_time_since_log_start_in_buffer(char* sTmp);
-        static File data_file;
+        static FsFile data_file;
         char log_file_name[LOG_FILE_NAME_LENGTH] = DEFAULT_LOG_FILE_NAME;
         char single_can_log_config_str[160];
         unsigned long log_start_millis;

@@ -25,6 +25,7 @@ Config file parameters
 - max_file_size - maximum file size before creating a new log file in bytes (default 1000000000, ~1GB)
 - unit_type - string of unit type, also could be project type or model name. Must be less than 11 characters.
 - unit_number - string of unique unit identifier, may be a serial number or other unique identifier. Must be less than 11 characters.
+- log_csv - boolean, set to true to log as human-readable CSV, otherwise logs in more compact log format.
 - overwrite_logs - boolean, if set to true then when log file list is full it will begin deleting and writing to log 000. (default false)
 - can_1, can_2, can_3 - dictionary of values for each CAN network
 
@@ -90,6 +91,13 @@ NOTE: SD Card MUST be formatted in FAT32 format!
 The code outputs files names CAN_XXX.log where XXX is a sequential number starting at 0. After 999 logs the file name convention will change to CANXXXX.log. After 9999 logs no further logging will occur.
 
 Each log file is a CSV file, the first line is a JSON text with the project identifier, unit identifier, and CANBus configuration.
+
+#### Compact Log File Format
+Each line is of the format: "%2.2f-%d-%X#([%0.2X]*LEN)"
+- Float representing time since start of logging
+- Int representing CAN bus number
+- Hex representing CAN message ID
+- N* 2-char hex representing CAN data
 
 ## Viewing Data
 See the [CAN Insight Log Processor](https://github.com/puregame/CANInsight-processing) for software to translate CSV files into useable datafiles for graphins and advanced analysis.

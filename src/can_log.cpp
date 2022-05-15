@@ -127,7 +127,6 @@ void SD_CAN_Logger::can_frame_to_str_log(const CAN_message_t &msg, char* sTmp){
   set_time_since_log_start_in_buffer(sTmp);
   sprintf(sTmp+strlen(sTmp), "-%d-", (unsigned int)msg.bus);
 
-
   sprintf(sTmp+strlen(sTmp), "%X#", (unsigned int)msg.id);
   byte len = min(msg.len, 8);
   for (int i=0; i<len; i++){
