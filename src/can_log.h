@@ -13,7 +13,7 @@ class SD_CAN_Logger {
         int start_log();
         void get_log_filename(char* name);
         void can_frame_to_str_csv(const CAN_message_t &msg, char* sTmp);
-        void can_frame_to_str_log(const CAN_message_t &msg, char* sTmp);
+        void can_frame_to_str_dat(const CAN_message_t &msg, char* sTmp);
         void write_sd_line(char* line);
         void reopen_file();
         static void flush_sd_file();

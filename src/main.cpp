@@ -45,10 +45,13 @@ void can_callback(const CAN_message_t &msg) {
   //filter by ID filter
     // id filtering in akpc CAN_Logger uses if ((rxmsg.EID & iFilterMask) != (iFilterValue & iFilterMask)) continue;
   char temp_str[128];
-  if (config.log_csv) 
-    sd_logger.can_frame_to_str_csv(msg, temp_str);
-  else
-    sd_logger.can_frame_to_str_log(msg, temp_str);
+    sd_logger.can_frame_to_str_dat(msg, temp_str);
+  // if (strcmp(config.log_type, "CSV") == 0){
+  //   sd_logger.can_frame_to_str_csv(msg, temp_str);
+  // }
+  // else if (strcmp(config.log_type, "DAT") == 0) {
+  //   sd_logger.can_frame_to_str_dat(msg, temp_str);
+  // }
   #ifdef DEBUG_SERIAL_PRINT_CAN_MSGS
     Serial.print("Got CAN message: ");
     Serial.print(temp_str);

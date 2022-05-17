@@ -19,7 +19,7 @@ SD_CAN_Logger::SD_CAN_Logger(Config_Manager* _config){
   // get the latest first and next log file numbers
   EEPROM.get(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
   EEPROM.get(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
-  if (next_log_file_number > MAX_LOG_NUMBER | first_log_file_number > MAX_LOG_NUMBER){
+  if ((next_log_file_number > MAX_LOG_NUMBER) | (first_log_file_number > MAX_LOG_NUMBER)){
     reset_log_file_numbers();
   }
   #ifdef DEBUG
@@ -105,6 +105,10 @@ int SD_CAN_Logger::start_log(){
     char s_tmp[30];
     set_current_time_in_buffer(s_tmp);
     data_file.print(s_tmp);
+    data_file.print("\", \"log_type\": \"");
+    data_file.print(config->log_type);
+    data_file.print(config->log_version);
+    data_file.print("hello");
     data_file.println("\"}");
     log_start_millis = millis();
     data_file.println(HEADER_CSV);
@@ -123,19 +127,21 @@ int SD_CAN_Logger::start_log(){
   return 1;
 }
 
-void SD_CAN_Logger::can_frame_to_str_log(const CAN_message_t &msg, char* sTmp){
+void SD_CAN_Logger::can_frame_to_str_dat(const CAN_message_t &msg, char* sTmp){
+  // NOTE IF CHANGING INCREMENT VERSION IN algorithm.h
   set_time_since_log_start_in_buffer(sTmp);
   sprintf(sTmp+strlen(sTmp), "-%d-", (unsigned int)msg.bus);
 
   sprintf(sTmp+strlen(sTmp), "%X#", (unsigned int)msg.id);
   byte len = min(msg.len, 8);
   for (int i=0; i<len; i++){
-    sprintf(sTmp+strlen(sTmp), "%0.2X", msg.buf[i]);
+    sprintf(sTmp+strlen(sTmp), "%.2X", msg.buf[i]);
   }
   strcat(sTmp, "\r\n");
 }
 
 void SD_CAN_Logger::can_frame_to_str_csv(const CAN_message_t &msg, char* sTmp){
+  // NOTE IF CHANGING INCREMENT VERSION IN algorithm.h
   set_time_since_log_start_in_buffer(sTmp);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.bus);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.flags.extended);

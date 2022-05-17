@@ -2,7 +2,7 @@
     "max_file_size": 1000000,
     "unit_type": "machine123",
     "unit_number": "E123123123",
-    "log_csv": false,
+    "log_type": "CSV",
     "can1":{
         "baudrate": 250,
         "bus_name": "My awesome bus",

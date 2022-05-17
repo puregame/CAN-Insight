@@ -25,7 +25,7 @@ Config file parameters
 - max_file_size - maximum file size before creating a new log file in bytes (default 1000000000, ~1GB)
 - unit_type - string of unit type, also could be project type or model name. Must be less than 11 characters.
 - unit_number - string of unique unit identifier, may be a serial number or other unique identifier. Must be less than 11 characters.
-- log_csv - boolean, set to true to log as human-readable CSV, otherwise logs in more compact log format.
+- log_type - string 3-char, options: "CSV", "DAT" "BLF"(future). DAT=slightly better data format
 - overwrite_logs - boolean, if set to true then when log file list is full it will begin deleting and writing to log 000. (default false)
 - can_1, can_2, can_3 - dictionary of values for each CAN network
 

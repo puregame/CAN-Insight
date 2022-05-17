@@ -1,4 +1,5 @@
 #include "Arduino.h"
+#include "algorithm.h"
 #include "config.h"
 #include "config_manager.h"
 #include <ArduinoJson.h>
@@ -104,12 +105,25 @@ int Config_Manager::read_config_file() {
     #endif
   }
 
-  if (config_root.containsKey("log_csv")){
-    log_csv = config_root["log_csv"] | false;
+  if (config_root.containsKey("log_type")){
+    strlcpy(log_type, config_root["log_type"] | "", LOG_TYPE_MAX_LEN);
+    if (strcmp(log_type, "CSV") == 0){
+      strcpy(log_version, CSV_VERSION);
+    }
+    else if (strcmp(log_type, "DAT") == 0){
+      strcpy(log_version, DAT_VERSION);
+    } 
+    else if (strcmp(log_type, "BLF") == 0){
+      strcpy(log_version, BLF_VERSION);
+    }
     #ifdef DEBUG
-      Serial.print("log_csv in config file: ");
-      Serial.println(log_csv);
+      Serial.print("log_type in config file: ");
+      Serial.println(log_type);
     #endif
+  }
+  else {
+    strcpy(log_type, "DAT");
+    strcpy(log_version, DAT_VERSION);
   }
   
   if (config_root.containsKey("delete_uploaded_logs")){
