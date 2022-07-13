@@ -41,12 +41,13 @@ void SD_CAN_Logger::reset_log_file_numbers(){
 
 void SD_CAN_Logger::flush_sd_file(){
   // check if write buffer is not empty, if it has content then write to the file then flush
+  // sd_logger.no_write_file = true;
   if (strlen(sd_logger.write_buffer) > 0){
     data_file.print(sd_logger.write_buffer);
     sd_logger.write_buffer[0]='\0'; // clear the write buffer
   }
-
   data_file.flush();
+  // sd_logger.no_write_file = false;
 }
 
 void SD_CAN_Logger::reopen_file(){
@@ -108,10 +109,12 @@ int SD_CAN_Logger::start_log(){
     data_file.print("\", \"log_type\": \"");
     data_file.print(config->log_type);
     data_file.print(config->log_version);
-    data_file.print("hello");
     data_file.println("\"}");
     log_start_millis = millis();
-    data_file.println(HEADER_CSV);
+    if (strcmp(config->log_type, "DAT") == 0)
+      data_file.println(HEADER_DAT);
+    else
+      data_file.println(HEADER_CSV);
   }
   else{
     Serial.println("file not opened!");
@@ -343,7 +346,7 @@ void SD_CAN_Logger::write_sd_line(char* line){
       Serial.println("ERROR: sd file buffer overrun!");
       return;
     }
-    if (strlen(write_buffer)+strlen(line) < SD_WRITE_BUFFER_LEN){
+    else {
       // if there is enough space in the buffer then append the line, otherwise ignore
       strcat(write_buffer, line);
     }

@@ -40,23 +40,29 @@ FsFile file;
 uint16_t log_number = 0;
 // ** begin functions
 
+bool setup_complete = false;
+
+char temp_str[128];
+
 void can_callback(const CAN_message_t &msg) {
   // filter by extended and standard
   //filter by ID filter
     // id filtering in akpc CAN_Logger uses if ((rxmsg.EID & iFilterMask) != (iFilterValue & iFilterMask)) continue;
-  char temp_str[128];
+  if (msg.flags.overrun) {
+    Serial.println("CAN RXQUEUE OVERRUN!");
+  }
+  if (strcmp(config.log_type, "CSV") == 0){
+    sd_logger.can_frame_to_str_csv(msg, temp_str);
+  }
+  else if (strcmp(config.log_type, "DAT") == 0) {
     sd_logger.can_frame_to_str_dat(msg, temp_str);
-  // if (strcmp(config.log_type, "CSV") == 0){
-  //   sd_logger.can_frame_to_str_csv(msg, temp_str);
-  // }
-  // else if (strcmp(config.log_type, "DAT") == 0) {
-  //   sd_logger.can_frame_to_str_dat(msg, temp_str);
-  // }
+  }
   #ifdef DEBUG_SERIAL_PRINT_CAN_MSGS
-    Serial.print("Got CAN message: ");
+    Serial.print("MSG: ");
     Serial.print(temp_str);
   #endif
   sd_logger.write_sd_line(temp_str);
+  temp_str[0] = '\0';
 }
 
 void setup_from_sd_card(){
@@ -93,16 +99,16 @@ void setup_from_sd_card(){
     Serial.println("Beginning CAN1");
     Can1.begin();
     Can1.setBaudRate(config.can_configs[0].baudrate*1000);
-    Can1.setMaxMB(16);
+    Can1.setClock(CLK_60MHz);
     Can1.enableFIFO();
     Can1.enableFIFOInterrupt();
     Can1.onReceive(can_callback);
+
   }
   if (config.can_configs[1].log_enabled){
     Serial.println("Beginning CAN2");
     Can2.begin();
     Can2.setBaudRate(config.can_configs[1].baudrate*1000);
-    Can2.setMaxMB(16);
     Can2.enableFIFO();
     Can2.enableFIFOInterrupt();
     Can2.onReceive(can_callback);
@@ -111,7 +117,6 @@ void setup_from_sd_card(){
     Serial.println("Beginning CAN3");
     Can3.begin();
     Can3.setBaudRate(config.can_configs[2].baudrate*1000);
-    Can3.setMaxMB(16);
     Can3.enableFIFO();
     Can3.enableFIFOInterrupt();
     Can3.onReceive(can_callback);
@@ -122,7 +127,7 @@ void setup_from_sd_card(){
 
 void setup() {
   pinMode(WIFI_WAKE, OUTPUT);
-  digitalWrite(WIFI_WAKE, HIGH);
+  digitalWrite(WIFI_WAKE, LOW);
   delay(100);
   setup_led();
   Serial.begin(115200);
@@ -184,7 +189,7 @@ void setup() {
         }
       }
 
-      timer_NTP_check.begin(check_set_rtc_from_wifi, 100s);
+      // timer_NTP_check.begin(check_set_rtc_from_wifi, 100s);
 
       data_uploader.upload_data();
       #ifdef DEBUG
@@ -201,13 +206,15 @@ unsigned long target_time = 0L ;
 
 void loop ()
 {
-  if (millis () - target_time >= ONE_SECOND_PERIOD)
+  if (!(setup_complete) and (millis () - target_time >= ONE_SECOND_PERIOD))
   {
     target_time += ONE_SECOND_PERIOD ;   // change scheduled time exactly, no slippage will happen
     if (status == no_sd){
       setup_from_sd_card();
+      setup_complete = true;
     }
   }
+  // sd_logger.no_write_file = true;
   TeensyTimerTool::tick();
   if (check_serial_time()){
     // time was updated, restart logging
@@ -216,6 +223,7 @@ void loop ()
     #endif
     sd_logger.restart_logging();
   }
+  // sd_logger.no_write_file = false;
 
   // blink LED blue every second
   if (millis() > last_off + 1200) {
@@ -225,4 +233,5 @@ void loop ()
   else if (millis() > last_off + 1000) {
     set_led_from_status(writing_sd);
   }
+  delay(50);
 }

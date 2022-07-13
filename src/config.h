@@ -2,7 +2,7 @@
 // #define DEBUG
     // slows down startup to allow serial to open
 
-// #DEFINE DEBUG_SERIAL_PRINT_CAN_MSGS // Uncomment to enable serial printing of ALL can messages
+// #define DEBUG_SERIAL_PRINT_CAN_MSGS // Uncomment to enable serial printing of ALL can messages
 
 /// ***** Time Parameters *****
 #define TIME_FILE_NAME "NOW.TXT"
@@ -21,6 +21,7 @@
 #define LOG_TYPE_MAX_LEN 5
 #define EOF_CAN_LOGFILE "---- EOF NEXT FILE TO FOLLOW ----"
 #define HEADER_CSV "timestamp,CAN_BUS,CAN_EXT,CAN_ID,CAN_LEN,Data0,Data1,Data2,Data3,Data4,Data5,Data6,Data7"
+#define HEADER_DAT "timestamp-CAN_BUS-CAN_ID#Data0..7"
 #define SD_WRITE_BUFFER_LEN 30000 // 30,000 chars in buffer, 
                                    // buffer writes every half second, 
                                    // assuming max line length of 50 would take 1200 messages per second to overflow buffer during file upload
