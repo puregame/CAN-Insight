@@ -31,11 +31,11 @@ void Wifi_Manager::ping_server(char* server_address){
 
 bool Wifi_Manager::search_and_connect(){
   // check if shield is present
-  if (WiFi.status() == WL_NO_SHIELD) {
-    Serial.println("WiFi module not present or not communicating");
-    // don't continue:
-    return false;
-  }
+  // if (WiFi.status() == WL_NO_SHIELD) {
+  //   Serial.println("WiFi module not present or not communicating");
+  //   // don't continue:
+  //   return false;
+  // }
   uint8 num_ssid = WiFi.scanNetworks();
 
   for (uint8 i=0; i < num_ssid; i++){

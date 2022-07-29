@@ -129,6 +129,7 @@ void setup() {
   pinMode(WIFI_WAKE, OUTPUT);
   digitalWrite(WIFI_WAKE, LOW);
   delay(100);
+  digitalWrite(WIFI_WAKE, HIGH);
   setup_led();
   Serial.begin(115200);
   Serial.println("Starting Program");
