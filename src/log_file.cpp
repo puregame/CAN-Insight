@@ -9,7 +9,7 @@ extern SdFs sd;
 LogFileMeta::LogFileMeta(char* file_name){
   // open file, read first line
   char file_first_line[2000] = "";
-  File log_file = sd.open(file_name, FILE_READ);
+  FsFile log_file = sd.open(file_name, FILE_READ);
   char cr[2] = "A";
   for(unsigned int i = 0; i < (2000 -1); i++){
     cr[0] = log_file.read();

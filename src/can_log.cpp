@@ -19,7 +19,7 @@ SD_CAN_Logger::SD_CAN_Logger(Config_Manager* _config){
   // get the latest first and next log file numbers
   EEPROM.get(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
   EEPROM.get(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
-  if (next_log_file_number > MAX_LOG_NUMBER | first_log_file_number > MAX_LOG_NUMBER){
+  if ((next_log_file_number > MAX_LOG_NUMBER) | (first_log_file_number > MAX_LOG_NUMBER)){
     reset_log_file_numbers();
   }
   #ifdef DEBUG
@@ -35,18 +35,19 @@ void SD_CAN_Logger::reset_log_file_numbers(){
   first_log_file_number = 0;
   EEPROM.put(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
   EEPROM.put(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
-  EEPROM.put(EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY, uint16_t(1));
-  EEPROM.put(EEPROM_LOCATION_UPLOADER_MAX_LOG, uint16_t(0));
+  EEPROM.put(EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY, uint16_t(next_log_file_number));
+  EEPROM.put(EEPROM_LOCATION_UPLOADER_MAX_LOG, uint16_t(first_log_file_number));
 }
 
 void SD_CAN_Logger::flush_sd_file(){
   // check if write buffer is not empty, if it has content then write to the file then flush
+  // sd_logger.no_write_file = true;
   if (strlen(sd_logger.write_buffer) > 0){
     data_file.print(sd_logger.write_buffer);
     sd_logger.write_buffer[0]='\0'; // clear the write buffer
   }
-
   data_file.flush();
+  // sd_logger.no_write_file = false;
 }
 
 void SD_CAN_Logger::reopen_file(){
@@ -105,9 +106,15 @@ int SD_CAN_Logger::start_log(){
     char s_tmp[30];
     set_current_time_in_buffer(s_tmp);
     data_file.print(s_tmp);
+    data_file.print("\", \"log_type\": \"");
+    data_file.print(config->log_type);
+    data_file.print(config->log_version);
     data_file.println("\"}");
     log_start_millis = millis();
-    data_file.println(HEADER_CSV);
+    if (strcmp(config->log_type, "DAT") == 0)
+      data_file.println(HEADER_DAT);
+    else
+      data_file.println(HEADER_CSV);
   }
   else{
     Serial.println("file not opened!");
@@ -123,7 +130,21 @@ int SD_CAN_Logger::start_log(){
   return 1;
 }
 
-void SD_CAN_Logger::can_frame_to_str(const CAN_message_t &msg, char* sTmp){
+void SD_CAN_Logger::can_frame_to_str_dat(const CAN_message_t &msg, char* sTmp){
+  // NOTE IF CHANGING INCREMENT VERSION IN algorithm.h
+  set_time_since_log_start_in_buffer(sTmp);
+  sprintf(sTmp+strlen(sTmp), "-%d-", (unsigned int)msg.bus);
+
+  sprintf(sTmp+strlen(sTmp), "%X#", (unsigned int)msg.id);
+  byte len = min(msg.len, 8);
+  for (int i=0; i<len; i++){
+    sprintf(sTmp+strlen(sTmp), "%.2X", msg.buf[i]);
+  }
+  strcat(sTmp, "\r\n");
+}
+
+void SD_CAN_Logger::can_frame_to_str_csv(const CAN_message_t &msg, char* sTmp){
+  // NOTE IF CHANGING INCREMENT VERSION IN algorithm.h
   set_time_since_log_start_in_buffer(sTmp);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.bus);
   sprintf(sTmp+strlen(sTmp), ",%d", (unsigned int)msg.flags.extended);
@@ -325,7 +346,7 @@ void SD_CAN_Logger::write_sd_line(char* line){
       Serial.println("ERROR: sd file buffer overrun!");
       return;
     }
-    if (strlen(write_buffer)+strlen(line) < SD_WRITE_BUFFER_LEN){
+    else {
       // if there is enough space in the buffer then append the line, otherwise ignore
       strcat(write_buffer, line);
     }

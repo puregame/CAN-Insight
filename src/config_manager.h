@@ -22,6 +22,8 @@ class Config_Manager{
         bool wifi_enabled;
         char server[SERVER_MAX_LEN];
         uint16_t port;
+        char log_type[LOG_TYPE_MAX_LEN];
+        char log_version[LOG_TYPE_MAX_LEN];
         bool overwrite_logs;
         bool delete_uploaded_logs;
     private:
