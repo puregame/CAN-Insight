@@ -220,7 +220,7 @@ bool DataUploader::upload_file(char* file_name){
         can_log_timer.start();
         sd_logger.no_write_file = false;
         // get HTTP status code
-        if (internet_client->available()){
+        if (internet_client->connected()){
           char status[13];
           internet_client->readBytes(status, 12);
           status[12] = '\0';
@@ -241,9 +241,16 @@ bool DataUploader::upload_file(char* file_name){
             }
           }
           else{
+            #ifdef DEBUG
+              Serial.println("\tStatus is NOT 200, do not delete file");
+              Serial.println(status);
+            #endif
             // server did not return success, do not increment file to send!
             return false;
           }
+        }
+        else {
+          Serial.println("Internet CLient not availble, not sure why");
         }
         internet_client->stop();
         return true;
@@ -265,3 +272,4 @@ bool DataUploader::upload_file(char* file_name){
       Serial.println("\tWill not upload file, other error");
       return false;
 }
+

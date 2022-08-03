@@ -30,6 +30,7 @@
 #define CONFIG_FILE_NAME "config.txt"
 #define UNIT_INFO_MAX_LEN 11
 #define CONFIG_FILE_JSON_SIZE_BYTES 3000
+#define EEPROM_RESET_FILE "reset_eeprom.txt"
 
 /// ******  can parameters *****
 #define DEFAULT_BAUD_RATE 250

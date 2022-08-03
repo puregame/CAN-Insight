@@ -35,8 +35,8 @@ void SD_CAN_Logger::reset_log_file_numbers(){
   first_log_file_number = 0;
   EEPROM.put(EEPROM_LOCATION_LOGGER_NEXT_LOG_NUM, next_log_file_number);
   EEPROM.put(EEPROM_LOCATION_LOGGER_FIRST_LOG_NUM, first_log_file_number);
-  EEPROM.put(EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY, uint16_t(1));
-  EEPROM.put(EEPROM_LOCATION_UPLOADER_MAX_LOG, uint16_t(0));
+  EEPROM.put(EEPROM_LOCATION_UPLOADER_NEXT_TO_TRY, uint16_t(next_log_file_number));
+  EEPROM.put(EEPROM_LOCATION_UPLOADER_MAX_LOG, uint16_t(first_log_file_number));
 }
 
 void SD_CAN_Logger::flush_sd_file(){

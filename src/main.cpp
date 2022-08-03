@@ -75,7 +75,15 @@ void setup_from_sd_card(){
     return;
   }
   read_time_file();
-
+  if (sd.exists(EEPROM_RESET_FILE)){ // if file named erase_eeprom.txt exists then reset eeprom values
+    
+    #ifdef DEBUG
+      Serial.println("reset_eeprom.txt exitss, Resetting EEPROM Values");
+    #endif
+    sd_logger.reset_log_file_numbers();
+    sd.remove(EEPROM_RESET_FILE);
+  }
+  
   if (!config.read_config_file()) Serial.println("Config File read error!");
 
   config.serial_print_bus_config_str(0);

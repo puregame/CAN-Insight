@@ -23,8 +23,8 @@ class SD_CAN_Logger {
         bool no_write_file = false;
         bool check_sd_free_space();
         int get_current_log_count();
-    private:
         void reset_log_file_numbers();
+    private:
         bool set_next_log_filename();
         char write_buffer[SD_WRITE_BUFFER_LEN];
         void print_end_log_line();
